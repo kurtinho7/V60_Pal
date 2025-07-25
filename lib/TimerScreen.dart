@@ -155,7 +155,7 @@ class _TimerScreenState extends State<TimerScreen>
     final isDone = currentStepIndex >= brewStepTimes.length - 1;
     final pourInfo = isDone
         ? ''
-        : 'Next: ${nextBrewAmount} g @ ${formatTime(nextBrewTime)}';
+        : 'Next: $nextBrewAmount g @ ${formatTime(nextBrewTime)}';
 
     final currentBrewAmount = currentStepIndex >= brewStepTimes.length
         ? 'Enjoy!'
@@ -183,7 +183,7 @@ class _TimerScreenState extends State<TimerScreen>
             // Elapsed timer
             Text(formatTime(elapsedSeconds), style: TextStyle(fontSize: 48)),
             SizedBox(height: 12),
-            Text('$currentBrewAmount', style: TextStyle(fontSize: 18.0)),
+            Text(currentBrewAmount, style: TextStyle(fontSize: 18.0)),
             SizedBox(height: 12),
             // Next pour info
             Text(

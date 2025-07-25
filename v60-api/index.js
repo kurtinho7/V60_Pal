@@ -7,55 +7,60 @@ app.use(express.json());
 app.use(cors());
 
 // 1) Connect to Atlas
-const uri = 'YOUR_CONNECTION_STRING';
+const uri = 'mongodb+srv://kurthymanyk7:qzZVNLgQsXTqY8NC@cluster0.u3j6pyo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('🗄️ MongoDB connected'))
   .catch(err => console.error(err));
 
 // 2) Define a Recipe schema
-const recipeSchema = new mongoose.Schema({
-  name: String,
-  waterWeightGrams: Number,
-  coffeeDose: String,
-  grindSize: String,
-  brewTime: String,
-  pourSteps: [Number],
-  pourAmounts: [Number],
-});
-const Recipe = mongoose.model('Recipe', recipeSchema);
+const JournalEntry = require('./models/JournalEntry');
 
-// 3) CRUD endpoints
-// GET all recipes
-app.get('/recipes', async (req, res) => {
-  const recipes = await Recipe.find();
-  res.json(recipes);
+// GET all entries
+app.get('/journalEntries', async (req, res) => {
+  const entries = await JournalEntry.find()
+    .populate('beans')
+    .populate('recipe');
+  res.json(entries);
 });
 
-// GET one recipe by ID
-app.get('/recipes/:id', async (req, res) => {
-  const recipe = await Recipe.findById(req.params.id);
-  if (!recipe) return res.status(404).send('Not found');
-  res.json(recipe);
+// GET one
+app.get('/journalEntries/:id', async (req, res) => {
+  const e = await JournalEntry.findById(req.params.id)
+    .populate('beans')
+    .populate('recipe');
+  if (!e) return res.status(404).send('Not found');
+  res.json(e);
 });
 
-// POST a new recipe
-app.post('/recipes', async (req, res) => {
-  const newRecipe = new Recipe(req.body);
-  await newRecipe.save();
-  res.status(201).json(newRecipe);
+// POST new
+app.post('/journalEntries', async (req, res) => {
+  const newEntry = new JournalEntry(req.body);
+  await newEntry.save();
+  // optionally re‐fetch with populated refs:
+  const full = await JournalEntry.findById(newEntry.id)
+    .populate('beans')
+    .populate('recipe');
+  res.status(201).json(full);
 });
 
-// PUT to update a recipe
-app.put('/recipes/:id', async (req, res) => {
-  const updated = await Recipe.findByIdAndUpdate(req.params.id, req.body, { new: true });
+// PUT update
+app.put('/journalEntries/:id', async (req, res) => {
+  const updated = await JournalEntry.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  )
+    .populate('beans')
+    .populate('recipe');
   res.json(updated);
 });
 
-// DELETE a recipe
-app.delete('/recipes/:id', async (req, res) => {
-  await Recipe.findByIdAndDelete(req.params.id);
+// DELETE
+app.delete('/journalEntries/:id', async (_req, res) => {
+  await JournalEntry.findByIdAndDelete(_req.params.id);
   res.sendStatus(204);
 });
+
 
 // 4) Start server
 const PORT = process.env.PORT || 3000;

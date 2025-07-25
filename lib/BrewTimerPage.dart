@@ -26,12 +26,12 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
   Widget build(BuildContext context) {
     String name = widget.recipe.name;
     double water = widget.recipe.waterWeightGrams;
-    String dose = widget.recipe.coffeDose;
+    String dose = widget.recipe.coffeeDose;
     List<int> pourSteps = widget.recipe.pourSteps;
     String brewTime = widget.recipe.brewTime;
     String grindSize = widget.recipe.grindSize;
     return Scaffold(
-      appBar: AppBar(title: Text('$name'), centerTitle: true),
+      appBar: AppBar(title: Text(name), centerTitle: true),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -87,7 +87,7 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4), // space between title & body
-                  Text('$dose', style: TextStyle(fontSize: 16)),
+                  Text(dose, style: TextStyle(fontSize: 16)),
                 ],
               ),
             ),
@@ -114,7 +114,7 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4), // space between title & body
-                  Text('$grindSize', style: TextStyle(fontSize: 16)),
+                  Text(grindSize, style: TextStyle(fontSize: 16)),
                 ],
               ),
             ),
@@ -141,7 +141,7 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4), // space between title & body
-                  Text('$brewTime', style: TextStyle(fontSize: 16)),
+                  Text(brewTime, style: TextStyle(fontSize: 16)),
                 ],
               ),
             ),

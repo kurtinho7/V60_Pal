@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:v60pal/main.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/BrewTimerPage.dart';
 
@@ -40,71 +39,78 @@ class _BrewScreenState extends State<BrewScreen> {
 
   final List<Recipe> _recipes = [
     Recipe(
+      id: '',
       name: "4:6 Method",
       waterWeightGrams: 300,
-      bloomSeconds: 45,
+      waterTemp: 45,
       pourSteps: [45, 90, 135, 180, 225],
-      coffeDose: "20g",
+      coffeeDose: "20g",
       grindSize: "fine",
       brewTime: "1:50",
       pourAmounts: [60, 120, 180, 240, 300],
     ),
     Recipe(
+      id: '',
       name: "James Hoffmann",
       waterWeightGrams: 250,
-      bloomSeconds: 45,
+      waterTemp: 45,
       pourSteps: [45, 70, 90, 110, 180],
-      coffeDose: "15g",
+      coffeeDose: "15g",
       grindSize: "medium-fine",
       brewTime: "3:00",
       pourAmounts: [50, 100, 150, 200, 250],
     ),
     Recipe(
+      id: '',
       name: "Scott Rao",
       waterWeightGrams: 340,
-      bloomSeconds: 45,
+      waterTemp: 45,
       pourSteps: [60, 120, 180],
-      coffeDose: "20g",
+      coffeeDose: "20g",
       grindSize: "medium-fine",
       brewTime: "1:50",
       pourAmounts: [60, 210, 340],
     ),
     Recipe(
+      id: '',
       name: "4:6",
       waterWeightGrams: 225,
-      bloomSeconds: 45,
+      waterTemp: 45,
       pourSteps: [45, 45, 45, 45, 45],
-      coffeDose: "15g",
+      coffeeDose: "15g",
       grindSize: "fine",
       brewTime: "1:50",
       pourAmounts: [45, 45, 45, 45, 45],
     ),
     Recipe(
+      id: '',
       name: "4:6",
       waterWeightGrams: 225,
-      bloomSeconds: 45,
+      waterTemp: 45,
       pourSteps: [45, 45, 45, 45, 45],
-      coffeDose: "15g",
+      coffeeDose: "15g",
       grindSize: "fine",
       brewTime: "1:50",
       pourAmounts: [45, 45, 45, 45, 45],
     ),
     Recipe(
+      id: '',
       name: "Onyx Method",
       waterWeightGrams: 250,
-      bloomSeconds: 30,
+      waterTemp: 30,
       pourSteps: [30, 90, 150],
-      coffeDose: "15g",
+      coffeeDose: "15g",
       grindSize: "medium-fine",
       brewTime: "2:30",
       pourAmounts: [50, 150, 250],
     ),
     Recipe(
+      id: '',
       name: "4:6",
       waterWeightGrams: 225,
-      bloomSeconds: 45,
+      waterTemp: 45,
       pourSteps: [45, 45, 45, 45, 45],
-      coffeDose: "15g",
+      coffeeDose: "15g",
       grindSize: "fine",
       brewTime: "1:50",
       pourAmounts: [45, 45, 45, 45, 45],
@@ -164,11 +170,11 @@ class _BrewScreenState extends State<BrewScreen> {
                           ),
                           fixedSize: const Size(80, 85),
                           backgroundColor: selected
-                              ? Colors.amber
-                              : Colors.grey.shade200,
-                          foregroundColor: selected
-                              ? Colors.white
+                              ? Colors.blueAccent
                               : Colors.black54,
+                          foregroundColor: selected
+                              ? Colors.black54
+                              : Colors.white,
                         ),
                         onPressed: () => _onIconTap(i),
                         child: Icon(_icons[i], size: 32),
@@ -178,7 +184,7 @@ class _BrewScreenState extends State<BrewScreen> {
                         _labels[i],
                         style: TextStyle(
                           fontSize: 12,
-                          color: selected ? Colors.amber : Colors.black87,
+                          color: selected ? Colors.blueAccent : Colors.white54,
                         ),
                       ),
                     ],
@@ -195,11 +201,11 @@ class _BrewScreenState extends State<BrewScreen> {
               child: RawMaterialButton(
                 onPressed: _onBrewPressed,
                 elevation: 2.0,
-                fillColor: Colors.white,
+                fillColor: Colors.black54,
                 constraints: BoxConstraints(minWidth: 300.0, minHeight: 300.0),
                 padding: EdgeInsets.all(15.0),
                 shape: CircleBorder(),
-                child: Text('BREW', style: TextStyle(fontSize: 50),),
+                child: Text('BREW', style: TextStyle(fontSize: 50, color: Colors.white),),
               ),
             ),
           ],

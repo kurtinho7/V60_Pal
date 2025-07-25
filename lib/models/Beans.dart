@@ -1,25 +1,30 @@
-import 'package:hive/hive.dart';
-
-@HiveType(typeId: 0)
-class Beans extends HiveObject {
-  @HiveField(0)
-  String name;
-
-  @HiveField(1)
-  String roastDate;
-
-  @HiveField(2)
-  String roasterName;
-
-  // Example: list of additional “pour` at time T” offsets in seconds.
-  @HiveField(3)
-  String notes; // e.g., [30, 60, 90] means pour at 30s, 60s, 90s
+// models/Beans.dart
+class Beans {
+  final String id;
+  final String name;
+  final String origin;
+  final String roastLevel;
 
   Beans({
+    required this.id,
     required this.name,
-    required this.roastDate,
-    required this.roasterName,
-    required this.notes
+    required this.origin,
+    required this.roastLevel,
   });
-}
 
+  factory Beans.fromJson(Map<String, dynamic> json) {
+    return Beans(
+      id:         json['id'] as String,
+      name:       json['name'] as String,
+      origin:     json['origin'] as String,
+      roastLevel: json['roastLevel'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id':         id,
+        'name':       name,
+        'origin':     origin,
+        'roastLevel': roastLevel,
+      };
+}
