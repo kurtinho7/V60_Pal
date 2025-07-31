@@ -1,12 +1,17 @@
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:v60pal/BeansScreen.dart';
 import 'package:v60pal/BrewScreen.dart';
 import 'package:v60pal/JournalScreen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:v60pal/models/Journal.dart';
+import 'package:v60pal/Theme.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final journal = Journal();
+  await journal.init();
+  runApp(ChangeNotifierProvider<Journal>.value(value: journal, child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -33,10 +38,17 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(textTheme: GoogleFonts.poppinsTextTheme(), colorScheme: ColorScheme.highContrastDark()),
+      theme: ThemeData(
+        textTheme: GoogleFonts.poppinsTextTheme(),
+        colorScheme: COLOR_SCHEME,
+        elevatedButtonTheme: ELEVATED_BUTTON_THEME,
+      ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text(screenNames[selectedIndex], style: TextStyle(color: Colors.black87)),
+          title: Text(
+            screenNames[selectedIndex],
+            style: TextStyle(color: Colors.black87),
+          ),
           backgroundColor: Colors.blueAccent,
           centerTitle: true,
         ),

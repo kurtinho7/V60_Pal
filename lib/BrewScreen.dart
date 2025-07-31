@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/BrewTimerPage.dart';
 
@@ -154,6 +155,7 @@ class _BrewScreenState extends State<BrewScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            SizedBox(height: 20),
             Expanded(
               child: GridView.count(
                 crossAxisCount: 3,
@@ -171,9 +173,9 @@ class _BrewScreenState extends State<BrewScreen> {
                           fixedSize: const Size(80, 85),
                           backgroundColor: selected
                               ? Colors.blueAccent
-                              : Colors.black54,
+                              : Colors.white10,
                           foregroundColor: selected
-                              ? Colors.black54
+                              ? Colors.white
                               : Colors.white,
                         ),
                         onPressed: () => _onIconTap(i),
@@ -201,7 +203,7 @@ class _BrewScreenState extends State<BrewScreen> {
               child: RawMaterialButton(
                 onPressed: _onBrewPressed,
                 elevation: 2.0,
-                fillColor: Colors.black54,
+                fillColor: Colors.white10,
                 constraints: BoxConstraints(minWidth: 300.0, minHeight: 300.0),
                 padding: EdgeInsets.all(15.0),
                 shape: CircleBorder(),

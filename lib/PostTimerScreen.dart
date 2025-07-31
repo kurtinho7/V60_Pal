@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Recipe.dart';
+import 'package:v60pal/models/Beans.dart';
+import 'package:v60pal/models/Journal.dart';
+import 'package:provider/provider.dart';
+import 'package:v60pal/persistence/JournalStorage.dart';
+
+
 
 class PostTimerScreen extends StatefulWidget {
   final Recipe recipe;
@@ -9,6 +16,38 @@ class PostTimerScreen extends StatefulWidget {
 }
 
 class _PostTimerScreenState extends State<PostTimerScreen> {
+  Recipe get recipe => widget.recipe;
+
+
+
+  Beans newBeans = Beans(
+    id: "",
+    name: "Johan",
+    origin: "Columbua",
+    roastLevel: "medium",
+  );
+
+  void onPressed(BuildContext context) {
+    final journalEntry = JournalEntry(
+      id: '',
+      rating: "5",
+      waterTemp: 100,
+      timeTaken: 100,
+      grindSetting: "5.2",
+      notes: "Awesome",
+      beans: newBeans,
+      recipe: recipe,
+    );
+
+    Journal journal = Provider.of<Journal>(context);
+
+    setState(() {
+      journal.addEntry(journalEntry);
+    });
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,8 +55,25 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
+            onPressed: () async {
+                final journalEntry = JournalEntry(
+                    id: '',
+                    rating: "5",
+                    waterTemp: 100,
+                    timeTaken: 100,
+                    grindSetting: "5.2",
+                    notes: "Awesome",
+                    beans: newBeans,
+                    recipe: recipe,
+                  );
+
+                Journal journal = context.read<Journal>();
+
+                await journal.addEntry(journalEntry);
+
+                Navigator.of(context).popUntil((route) => route.isFirst);
+
+
             },
             icon: Icon(Icons.done),
             tooltip: 'Done',
@@ -29,7 +85,7 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [Text('Enjoy!')],
+          children: [Text('Enjoy!', style: TextStyle(color: Colors.white70))],
         ),
       ),
     );

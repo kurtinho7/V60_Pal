@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Recipe.dart';
+import 'package:v60pal/models/Journal.dart';
 import 'ApiService.dart';
+import 'package:provider/provider.dart';
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -55,8 +57,18 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ElevatedButton( onPressed: _saveEntry, child: Icon(Icons.abc),),
+    final journal = Provider.of<Journal>(context);
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListView.builder(
+          itemCount: journal.entries.length,
+          itemBuilder: (_, i) {
+            final entry = journal.entries[i];
+            return ListTile(title: Text(entry.rating, style: TextStyle(color: Colors.white70),));
+          },
+        ),
+      ),
     );
   }
 }
