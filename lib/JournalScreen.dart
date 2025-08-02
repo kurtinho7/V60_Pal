@@ -40,7 +40,7 @@ class _JournalScreenState extends State<JournalScreen> {
     });
   }
 
-  void _saveEntry() async {
+  void saveEntry() async {
     final newEntry = JournalEntry(
       id: '', // server will assign
       rating: '5',
@@ -65,7 +65,7 @@ class _JournalScreenState extends State<JournalScreen> {
           itemCount: journal.entries.length,
           itemBuilder: (_, i) {
             final entry = journal.entries[i];
-            return ListTile(title: Text(entry.rating, style: TextStyle(color: Colors.white70),));
+            return ListTile(title: Text('${entry.rating}, ${entry.waterTemp}, ${entry.grindSetting}' , style: TextStyle(color: Colors.white70),));
           },
         ),
       ),

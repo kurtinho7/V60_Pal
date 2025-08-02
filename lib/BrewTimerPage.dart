@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:v60pal/Theme.dart';
 import 'package:v60pal/TimerScreen.dart';
 import 'package:v60pal/main.dart';
 import 'package:v60pal/models/Recipe.dart';
@@ -57,10 +58,10 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                 children: [
                   Text(
                     'WATER',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
                   ),
                   SizedBox(height: 4), // space between title & body
-                  Text('$water', style: TextStyle(fontSize: 16)),
+                  Text('$water', style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
                 ],
               ),
             ),
@@ -84,10 +85,10 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                 children: [
                   Text(
                     'DOSE',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
                   ),
                   SizedBox(height: 4), // space between title & body
-                  Text(dose, style: TextStyle(fontSize: 16)),
+                  Text(dose, style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
                 ],
               ),
             ),
@@ -111,10 +112,10 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                 children: [
                   Text(
                     'GRIND SIZE',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
                   ),
                   SizedBox(height: 4), // space between title & body
-                  Text(grindSize, style: TextStyle(fontSize: 16)),
+                  Text(grindSize, style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
                 ],
               ),
             ),
@@ -138,10 +139,10 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                 children: [
                   Text(
                     'BREW TIME',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
                   ),
                   SizedBox(height: 4), // space between title & body
-                  Text(brewTime, style: TextStyle(fontSize: 16)),
+                  Text(brewTime, style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
                 ],
               ),
             ),
@@ -152,11 +153,11 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
               child: RawMaterialButton(
                 onPressed: _onStartPress,
                 elevation: 2.0,
-                fillColor: Colors.white,
+                fillColor: Colors.white10,
                 constraints: BoxConstraints(minWidth: 300.0, minHeight: 300.0),
                 padding: EdgeInsets.all(15.0),
                 shape: CircleBorder(),
-                child: Text("START", style: TextStyle(fontSize: 70),),
+                child: Text("START", style: TextStyle(fontSize: 70, color: TEXT_COLOR),),
               ),
             ),
           ],

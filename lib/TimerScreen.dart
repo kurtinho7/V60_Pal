@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:v60pal/BrewTimerPage.dart';
+import 'package:v60pal/Theme.dart';
 import 'package:v60pal/main.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'dart:async';
@@ -175,20 +176,26 @@ class _TimerScreenState extends State<TimerScreen>
                 animation: stepController,
                 builder: (context, _) => CircularProgressIndicator(
                   value: stepController.value,
-                  strokeWidth: 12,
+                  strokeWidth: 20,
                 ),
               ),
             ),
             SizedBox(height: 24),
             // Elapsed timer
-            Text(formatTime(elapsedSeconds), style: TextStyle(fontSize: 48)),
+            Text(
+              formatTime(elapsedSeconds),
+              style: TextStyle(fontSize: 48, color: TEXT_COLOR),
+            ),
             SizedBox(height: 12),
-            Text(currentBrewAmount, style: TextStyle(fontSize: 18.0)),
+            Text(
+              currentBrewAmount,
+              style: TextStyle(fontSize: 18.0, color: TEXT_COLOR),
+            ),
             SizedBox(height: 12),
             // Next pour info
             Text(
               pourInfo,
-              style: TextStyle(fontSize: 18.0, color: Colors.black45),
+              style: TextStyle(fontSize: 18.0, color: Colors.white70),
             ),
             SizedBox(height: 24),
             // Start/pause
@@ -196,6 +203,7 @@ class _TimerScreenState extends State<TimerScreen>
               onPressed: isRunning ? pauseTimer : startTimer,
               child: Text(isRunning ? "Pause" : "Start"),
             ),
+            SizedBox(height: 60),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -210,10 +218,17 @@ class _TimerScreenState extends State<TimerScreen>
                     backStep(time);
                   },
                   child: Icon(Icons.arrow_back),
+                  style: ButtonStyle(
+                    fixedSize: WidgetStateProperty.all(const Size(70, 80)),
+                  ),
                 ),
+                SizedBox(width: 50),
                 ElevatedButton(
                   onPressed: () => skipStep(nextBrewTime),
-                  child: Icon(Icons.start),
+                  child: Icon(Icons.arrow_forward),
+                  style: ButtonStyle(
+                    fixedSize: WidgetStateProperty.all(const Size(70, 80)),
+                  ),
                 ),
               ],
             ),
