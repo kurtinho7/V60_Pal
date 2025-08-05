@@ -4,14 +4,25 @@ import 'package:v60pal/BeansScreen.dart';
 import 'package:v60pal/BrewScreen.dart';
 import 'package:v60pal/JournalScreen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:v60pal/models/BeansList.dart';
 import 'package:v60pal/models/Journal.dart';
 import 'package:v60pal/Theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final journal = Journal();
+  final beansList = BeansList();
   await journal.init();
-  runApp(ChangeNotifierProvider<Journal>.value(value: journal, child: MyApp()));
+  await beansList.init();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<Journal>.value(value: journal),
+        ChangeNotifierProvider<BeansList>.value(value: beansList),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {

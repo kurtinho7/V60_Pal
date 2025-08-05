@@ -8,6 +8,7 @@ import 'package:v60pal/models/Journal.dart';
 import 'package:provider/provider.dart';
 import 'package:v60pal/persistence/JournalStorage.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:v60pal/models/BeansList.dart';
 
 class PostTimerScreen extends StatefulWidget {
   final Recipe recipe;
@@ -21,6 +22,9 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
 
   double currentRating = 0;
 
+  Beans? selectedBeans;
+
+
   final TextEditingController myNotesController = TextEditingController();
   final TextEditingController myGrindController = TextEditingController();
   final TextEditingController myTempController = TextEditingController();
@@ -31,7 +35,6 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
     currentRating = 0;
   }
 
-
   Beans newBeans = Beans(
     id: "",
     name: "Johan",
@@ -41,26 +44,35 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final beansList = context.watch<BeansList>();
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
             onPressed: () async {
+              final newGrindSetting = (myGrindController.text.isEmpty)? "": myGrindController.text;
+              final newNotes = (myNotesController.text.isEmpty)? "": myNotesController.text;
+              final newTemp = (myTempController.text.isEmpty)? 0: int.parse(myTempController.text);
+
               final journalEntry = JournalEntry(
                 id: '',
                 rating: currentRating.toString(),
-                waterTemp: int.parse(myTempController.text),
+                waterTemp: newTemp,
                 timeTaken: recipe.pourSteps.last,
-                grindSetting: myGrindController.text,
-                notes: myNotesController.text,
+                grindSetting: newGrindSetting,
+                notes: newNotes,
                 beans: newBeans,
                 recipe: recipe,
               );
 
+              final fakeBeans = Beans(id: "", name: "Johan", origin: "Colombia", roastLevel: "Medium");
+
               Journal journal = context.read<Journal>();
 
               await journal.addEntry(journalEntry);
+
+              await beansList.addEntry(fakeBeans);
 
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
@@ -75,6 +87,10 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              "Enjoy Your Brew!",
+              style: TextStyle(color: TEXT_COLOR, fontSize: 35),
+            ),
             SizedBox(height: 20),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -96,7 +112,10 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Rating", style: TextStyle(color: TEXT_COLOR)),
+                      Text(
+                        "Rating",
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
+                      ),
                       RatingBar(
                         initialRating: currentRating,
                         minRating: 0.5,
@@ -105,9 +124,9 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                         itemCount: 5,
                         itemPadding: const EdgeInsets.symmetric(horizontal: 2),
                         ratingWidget: RatingWidget(
-                          full: Icon(Icons.star, color: Colors.amber),
-                          half: Icon(Icons.star_half, color: Colors.amber),
-                          empty: Icon(Icons.star_border, color: Colors.amber),
+                          full: Icon(Icons.star, color: PRIMARY_COLOR),
+                          half: Icon(Icons.star_half, color: PRIMARY_COLOR),
+                          empty: Icon(Icons.star_border, color: PRIMARY_COLOR),
                         ),
                         onRatingUpdate: (rating) {
                           setState(() {
@@ -152,47 +171,50 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                     children: [
                       Text(
                         "Dose",
-                        style: TextStyle(color: TEXT_COLOR, fontSize: 15),
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                       ),
-                      Text(recipe.coffeeDose),
+                      Text(
+                        recipe.coffeeDose,
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
+                      ),
                     ],
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "Water",
-                        style: TextStyle(color: TEXT_COLOR, fontSize: 15),
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                       ),
                       Text(
                         recipe.waterWeightGrams.toString(),
-                        style: TextStyle(color: TEXT_COLOR, fontSize: 15),
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                       ),
                     ],
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "Time Taken",
-                        style: TextStyle(color: TEXT_COLOR, fontSize: 15),
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                       ),
                       Text(
                         recipe.brewTime,
-                        style: TextStyle(color: TEXT_COLOR, fontSize: 15),
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                       ),
                     ],
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: 18),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "Grind Setting",
-                        style: TextStyle(color: TEXT_COLOR, fontSize: 15),
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                       ),
                       Expanded(
                         child: TextField(
@@ -200,6 +222,7 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                             hintText: 'Grind Setting',
                             hintStyle: TextStyle(color: Colors.white38),
                             hintTextDirection: TextDirection.rtl,
+                            border: InputBorder.none,
                           ),
                           controller: myGrindController,
                           textAlign: TextAlign.right,
@@ -209,14 +232,14 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: 18),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "Water Temp",
-                        style: TextStyle(color: TEXT_COLOR, fontSize: 15),
+                        style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                       ),
                       Expanded(
                         child: TextField(
@@ -224,6 +247,7 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                             hintText: 'Temp',
                             hintStyle: TextStyle(color: Colors.white38),
                             hintTextDirection: TextDirection.rtl,
+                            border: InputBorder.none,
                           ),
                           controller: myTempController,
                           textAlign: TextAlign.right,
@@ -235,6 +259,46 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 18),
+            Text("Beans", style: TextStyle(color: TEXT_COLOR, fontSize: 20)),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                border: Border.all(color: Colors.white),
+                borderRadius: BorderRadius.circular(4.0),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                    color: Colors.black12,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  DropdownButton<Beans>(
+                    hint: (selectedBeans == null)? Text('Select a Bean'): Text(selectedBeans!.name),
+                    value: selectedBeans,
+                    items: beansList.entries.map((bean) {
+                      return DropdownMenuItem<Beans>(
+                        value: bean,
+                        child: Text(
+                          bean.name,
+                        ), // show whatever field makes sense
+                      );
+                    }).toList(),
+                    onChanged: (Beans? beans) {
+                      setState(() {
+                        selectedBeans = beans;
+                      });
+
+                    }
                   ),
                 ],
               ),
