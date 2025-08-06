@@ -64,6 +64,7 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                 notes: newNotes,
                 beans: newBeans,
                 recipe: recipe,
+                date: DateTime.now(),
               );
 
               final fakeBeans = Beans(id: "", name: "Johan", origin: "Colombia", roastLevel: "Medium");
@@ -282,23 +283,26 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
               ),
               child: Column(
                 children: [
-                  DropdownButton<Beans>(
-                    hint: (selectedBeans == null)? Text('Select a Bean'): Text(selectedBeans!.name),
-                    value: selectedBeans,
-                    items: beansList.entries.map((bean) {
-                      return DropdownMenuItem<Beans>(
-                        value: bean,
-                        child: Text(
-                          bean.name,
-                        ), // show whatever field makes sense
-                      );
-                    }).toList(),
-                    onChanged: (Beans? beans) {
-                      setState(() {
-                        selectedBeans = beans;
-                      });
-
-                    }
+                  SizedBox(
+                    width: 500,
+                    child: DropdownButton<Beans>(
+                      hint: (selectedBeans == null)? Text('Select a Bean'): Text(selectedBeans!.name),
+                      value: selectedBeans,
+                      menuWidth: 400,
+                      items: beansList.entries.map((bean) {
+                        return DropdownMenuItem<Beans>(
+                          value: bean,
+                          child: Text(
+                            bean.name, style: TextStyle(color: TEXT_COLOR),
+                          ), // show whatever field makes sense
+                        );
+                      }).toList(),
+                      onChanged: (Beans? beans) {
+                        setState(() {
+                          selectedBeans = beans;
+                        });
+                      }
+                    ),
                   ),
                 ],
               ),

@@ -9,6 +9,7 @@ const journalEntrySchema = new mongoose.Schema({
   notes:         { type: String, default: '' },
   beans:         { type: String, required: true },
   recipe:        { type: String, required: true },
+  date:          { type: DateTime, required: true},
 }, {
   timestamps: true
 });

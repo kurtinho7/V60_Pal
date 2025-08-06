@@ -19,6 +19,8 @@ class JournalEntry{
 
   Recipe recipe;
 
+  DateTime date;
+
   JournalEntry({
     required this.id,
     required this.rating,
@@ -28,6 +30,7 @@ class JournalEntry{
     required this.notes,
     required this.beans,
     required this.recipe,
+    required this.date,
   });
 
   factory JournalEntry.fromJson(Map<String, dynamic> j) => JournalEntry(
@@ -39,6 +42,7 @@ class JournalEntry{
     notes: j['notes'],
     beans: Beans.fromJson(j['beans']as Map<String,dynamic>),
     recipe: Recipe.fromJson(j['recipe']as Map<String,dynamic>),
+    date: DateTime.parse(j['date'] as String), 
   );
 
   Map<String, dynamic> toJson() => {
@@ -50,6 +54,7 @@ class JournalEntry{
     'notes':       notes,
     'beans':       beans.toJson(),   // send only the ID if your API expects ref
     'recipe':      recipe.toJson(),  // same here
+    'date': date.toIso8601String(),
   };
 
   String toJsonString() => jsonEncode(toJson());

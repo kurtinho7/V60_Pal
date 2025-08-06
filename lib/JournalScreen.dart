@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:v60pal/AddJournalEntryScreen.dart';
+import 'package:v60pal/JournalEntryViewScreen.dart';
+import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Beans.dart';
+import 'package:v60pal/models/BeansList.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/models/Journal.dart';
@@ -50,6 +54,7 @@ class _JournalScreenState extends State<JournalScreen> {
       notes: 'Tasted bright and sweet.',
       beans: selectedBeans,
       recipe: selectedRecipe,
+      date: DateTime.now(),
     );
     final saved = await ApiService().createJournalEntry(newEntry);
     setState(() => journalEntries.add(saved));
@@ -58,6 +63,7 @@ class _JournalScreenState extends State<JournalScreen> {
   @override
   Widget build(BuildContext context) {
     final journal = Provider.of<Journal>(context);
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -65,7 +71,23 @@ class _JournalScreenState extends State<JournalScreen> {
           itemCount: journal.entries.length,
           itemBuilder: (_, i) {
             final entry = journal.entries[i];
-            return ListTile(title: Text('${entry.rating}, ${entry.waterTemp}, ${entry.grindSetting}' , style: TextStyle(color: Colors.white70),));
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ListTile(
+                title: Text(
+                  '${MONTHS[entry.date.month]} ${entry.date.day}',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                subtitle: Text('${entry.recipe.name}'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(8), ),
+                horizontalTitleGap: 20,
+                tileColor: BUTTON_COLOR,
+                minTileHeight: 80,
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => JournalEntryViewScreen()));
+                },
+              ),
+            );
           },
         ),
       ),
