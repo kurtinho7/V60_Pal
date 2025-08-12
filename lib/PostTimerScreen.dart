@@ -6,7 +6,6 @@ import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/Journal.dart';
 import 'package:provider/provider.dart';
-import 'package:v60pal/persistence/JournalStorage.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:v60pal/models/BeansList.dart';
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:v60pal/Theme.dart';
 
 class AddBeansScreen extends StatefulWidget{
+  const AddBeansScreen({super.key});
+
   @override
   State<AddBeansScreen> createState() => _AddBeansScreenState();
 }

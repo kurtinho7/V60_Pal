@@ -217,18 +217,18 @@ class _TimerScreenState extends State<TimerScreen>
                     }
                     backStep(time);
                   },
-                  child: Icon(Icons.arrow_back),
                   style: ButtonStyle(
                     fixedSize: WidgetStateProperty.all(const Size(70, 80)),
                   ),
+                  child: Icon(Icons.arrow_back),
                 ),
                 SizedBox(width: 50),
                 ElevatedButton(
                   onPressed: () => skipStep(nextBrewTime),
-                  child: Icon(Icons.arrow_forward),
                   style: ButtonStyle(
                     fixedSize: WidgetStateProperty.all(const Size(70, 80)),
                   ),
+                  child: Icon(Icons.arrow_forward),
                 ),
               ],
             ),

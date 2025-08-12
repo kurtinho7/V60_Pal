@@ -1,4 +1,3 @@
-import 'package:hive/hive.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'dart:convert';

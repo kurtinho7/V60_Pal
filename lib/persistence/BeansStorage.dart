@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:v60pal/models/Beans.dart';
-import 'package:v60pal/models/JournalEntry.dart';
 import 'dart:convert';
 
 

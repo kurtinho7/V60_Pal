@@ -78,13 +78,13 @@ class _JournalScreenState extends State<JournalScreen> {
                   '${MONTHS[entry.date.month]} ${entry.date.day}',
                   style: TextStyle(color: Colors.white70),
                 ),
-                subtitle: Text('${entry.recipe.name}'),
+                subtitle: Text(entry.recipe.name),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(8), ),
                 horizontalTitleGap: 20,
                 tileColor: BUTTON_COLOR,
                 minTileHeight: 80,
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => JournalEntryViewScreen()));
+                  Navigator.push(context, ModalBottomSheetRoute(builder: (context) => JournalEntryViewScreen(journalEntry: entry,), isScrollControlled: true,));
                 },
               ),
             );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/TimerScreen.dart';
-import 'package:v60pal/main.dart';
 import 'package:v60pal/models/Recipe.dart';
 
 class BrewTimerPage extends StatefulWidget {

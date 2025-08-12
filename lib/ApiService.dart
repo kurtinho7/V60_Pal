@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:v60pal/models/JournalEntry.dart';
-import 'models/Recipe.dart';
 
 class ApiService {
   final baseUrl = 'http://10.0.2.2:3000';
