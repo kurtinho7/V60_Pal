@@ -70,6 +70,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                     hintText: entry.notes,
                     hintStyle: TextStyle(color: TEXT_COLOR),
                   ),
+                  style: TextStyle(color: TEXT_COLOR),
                 ),
               ],
             ),
@@ -158,7 +159,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      "${entry.grindSetting}",
+                      entry.grindSetting,
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],
@@ -208,7 +209,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      "${entry.beans.name}",
+                      entry.beans.name,
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],

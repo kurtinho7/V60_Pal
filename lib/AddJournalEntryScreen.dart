@@ -251,6 +251,7 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                       hintStyle: TextStyle(color: Colors.white38),
                     ),
                     controller: myNotesController,
+                    style: TextStyle(color: TEXT_COLOR),
                   ),
                 ],
               ),

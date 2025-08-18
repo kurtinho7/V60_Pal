@@ -1,38 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:v60pal/Theme.dart';
+import 'package:v60pal/models/BeansList.dart';
 
 class BeansScreen extends StatelessWidget {
   const BeansScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final beansList = Provider.of<BeansList>(context);
+
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.amber,
-                border: Border.all(color: Colors.black45),
-                borderRadius: BorderRadius.circular(4.0),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                    color: Colors.black12,
-                  ),
-                ],
-              ),
-              child: Text(
-                'Water Amount',
-                style: TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
+        padding: EdgeInsetsGeometry.all(16),
+        child: GridView.builder(
+          itemCount: beansList.entries.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+          ),
+          itemBuilder: (_, i) {
+            final beans = beansList.entries[i];
+            return Padding(
+              padding: EdgeInsetsGeometry.all(10),
+              child: GridTile(child: Text(beans.name, style: TextStyle(color: TEXT_COLOR),)),
+            );
+          },
         ),
       ),
     );

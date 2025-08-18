@@ -18,5 +18,11 @@ class Journal extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> removeEntry(int i) async {
+    _entries.removeAt(i);
+    await saveEntries(_entries);
+    notifyListeners();
+  }
+
   // You can also add update/remove methods similarly...
 }
