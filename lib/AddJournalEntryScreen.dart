@@ -114,13 +114,6 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
     currentRating = 0;
   }
 
-  Beans newBeans = Beans(
-    id: "",
-    name: "Johan",
-    origin: "Columbua",
-    roastLevel: "medium",
-  );
-
   @override
   Widget build(BuildContext context) {
     final beansList = context.watch<BeansList>();
@@ -144,10 +137,13 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                   : int.parse(myTimeController.text);
 
               final nullBeans = Beans(
-                id: "",
-                name: "",
-                origin: "",
-                roastLevel: "",
+                id: '',
+                name: '',
+                origin: '',
+                roastLevel: '',
+                roastDate: DateTime(0, 0, 0, 0, 0, 0),
+                weight: 0,
+                notes: '',
               );
 
               final nullRecipe = Recipe(

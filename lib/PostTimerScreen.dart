@@ -23,7 +23,6 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
 
   Beans? selectedBeans;
 
-
   final TextEditingController myNotesController = TextEditingController();
   final TextEditingController myGrindController = TextEditingController();
   final TextEditingController myTempController = TextEditingController();
@@ -34,13 +33,6 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
     currentRating = 0;
   }
 
-  Beans newBeans = Beans(
-    id: "",
-    name: "Johan",
-    origin: "Columbua",
-    roastLevel: "medium",
-  );
-
   @override
   Widget build(BuildContext context) {
     final beansList = context.watch<BeansList>();
@@ -50,9 +42,27 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
         actions: [
           IconButton(
             onPressed: () async {
-              final newGrindSetting = (myGrindController.text.isEmpty)? "": myGrindController.text;
-              final newNotes = (myNotesController.text.isEmpty)? "": myNotesController.text;
-              final newTemp = (myTempController.text.isEmpty)? 0: int.parse(myTempController.text);
+              final newGrindSetting = (myGrindController.text.isEmpty)
+                  ? ""
+                  : myGrindController.text;
+              final newNotes = (myNotesController.text.isEmpty)
+                  ? ""
+                  : myNotesController.text;
+              final newTemp = (myTempController.text.isEmpty)
+                  ? 0
+                  : int.parse(myTempController.text);
+
+              final nullBeans = Beans(
+                id: '',
+                name: '',
+                origin: '',
+                roastLevel: '',
+                roastDate: DateTime(0, 0, 0, 0, 0, 0),
+                weight: 0,
+                notes: '',
+              );
+
+              selectedBeans ??= nullBeans;
 
               final journalEntry = JournalEntry(
                 id: '',
@@ -61,18 +71,14 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                 timeTaken: recipe.pourSteps.last,
                 grindSetting: newGrindSetting,
                 notes: newNotes,
-                beans: newBeans,
+                beans: selectedBeans!,
                 recipe: recipe,
                 date: DateTime.now(),
               );
 
-              final fakeBeans = Beans(id: "", name: "Johan", origin: "Colombia", roastLevel: "Medium");
-
               Journal journal = context.read<Journal>();
 
               await journal.addEntry(journalEntry);
-
-              await beansList.addEntry(fakeBeans);
 
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
@@ -285,14 +291,17 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                   SizedBox(
                     width: 500,
                     child: DropdownButton<Beans>(
-                      hint: (selectedBeans == null)? Text('Select a Bean'): Text(selectedBeans!.name),
+                      hint: (selectedBeans == null)
+                          ? Text('Select a Bean')
+                          : Text(selectedBeans!.name),
                       value: selectedBeans,
                       menuWidth: 400,
                       items: beansList.entries.map((bean) {
                         return DropdownMenuItem<Beans>(
                           value: bean,
                           child: Text(
-                            bean.name, style: TextStyle(color: TEXT_COLOR),
+                            bean.name,
+                            style: TextStyle(color: TEXT_COLOR),
                           ), // show whatever field makes sense
                         );
                       }).toList(),
@@ -300,7 +309,7 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                         setState(() {
                           selectedBeans = beans;
                         });
-                      }
+                      },
                     ),
                   ),
                 ],
