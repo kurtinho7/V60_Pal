@@ -8,12 +8,13 @@ app.use(cors());
 
 // 1) Connect to Atlas
 const uri = 'mongodb+srv://kurthymanyk7:qzZVNLgQsXTqY8NC@cluster0.u3j6pyo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(uri)
   .then(() => console.log('🗄️ MongoDB connected'))
   .catch(err => console.error(err));
 
 // 2) Define a Recipe schema
 const JournalEntry = require('./models/JournalEntry');
+const Beans = require('./models/Beans')
 
 // GET all entries
 app.get('/journalEntries', async (req, res) => {
@@ -21,6 +22,11 @@ app.get('/journalEntries', async (req, res) => {
     .populate('beans')
     .populate('recipe');
   res.json(entries);
+});
+
+app.get('/beans', async (req, res) => {
+    const entries = await Beans.find();
+    res.json(entries);
 });
 
 // GET one
@@ -32,6 +38,12 @@ app.get('/journalEntries/:id', async (req, res) => {
   res.json(e);
 });
 
+app.get('/beans/:id', async (req, res) => {
+    const e = await Beans.findById(req.params.id);
+    if (!e) return res.status(404).send('Not found');
+    res.json(e);
+  });
+
 // POST new
 app.post('/journalEntries', async (req, res) => {
   const newEntry = new JournalEntry(req.body);
@@ -42,6 +54,14 @@ app.post('/journalEntries', async (req, res) => {
     .populate('recipe');
   res.status(201).json(full);
 });
+
+app.post('/beans', async (req, res) => {
+    const newEntry = new Beans(req.body);
+    await newEntry.save();
+    // optionally re‐fetch with populated refs:
+    const full = await Beans.findById(newEntry.id);
+    res.status(201).json(full);
+  });
 
 // PUT update
 app.put('/journalEntries/:id', async (req, res) => {
@@ -55,11 +75,25 @@ app.put('/journalEntries/:id', async (req, res) => {
   res.json(updated);
 });
 
+app.put('/beans/:id', async (req, res) => {
+    const updated = await Beans.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updated);
+  });
+
 // DELETE
 app.delete('/journalEntries/:id', async (_req, res) => {
   await JournalEntry.findByIdAndDelete(_req.params.id);
   res.sendStatus(204);
 });
+
+app.delete('/beans/:id', async (_req, res) => {
+    await Beans.findByIdAndDelete(_req.params.id);
+    res.sendStatus(204);
+  });
 
 
 // 4) Start server
