@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55417226684",
+    "project_id": "v60-pal-de95b",
+    "storage_bucket": "v60-pal-de95b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55417226684:android:989e2104267677f58ad7b9",
+        "android_client_info": {
+          "package_name": "com.example.v60pal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDo3bArabRpoP4EQLpf9ZlDnw3i6O7XylM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

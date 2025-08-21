@@ -21,7 +21,7 @@ class Beans {
 
   factory Beans.fromJson(Map<String, dynamic> json) {
     return Beans(
-      id:         json['id'] as String,
+      id:         json['_id'] as String,
       name:       json['name'] as String,
       origin:     json['origin'] as String,
       roastLevel: json['roastLevel'] as String,
@@ -32,7 +32,7 @@ class Beans {
   }
 
   Map<String, dynamic> toJson() => {
-        'id':         id,
+        '_id':         id,
         'name':       name,
         'origin':     origin,
         'roastLevel': roastLevel,

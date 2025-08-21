@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:v60pal/ApiClient.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Recipe.dart';
@@ -8,6 +9,9 @@ import 'package:v60pal/models/Journal.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:v60pal/models/BeansList.dart';
+import 'package:v60pal/services/JournalEntryService.dart';
+import 'package:v60pal/services/BeansService.dart';
+
 
 class AddJournalEntryScreen extends StatefulWidget {
   const AddJournalEntryScreen({super.key});
@@ -101,6 +105,12 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
 
   Recipe? selectedRecipe;
 
+  String? beansId;
+
+  late final ApiClient api;
+  late final JournalService journalSvc;
+  late final BeansService beansSvc;
+
   final TextEditingController myNotesController = TextEditingController();
   final TextEditingController myGrindController = TextEditingController();
   final TextEditingController myTempController = TextEditingController();
@@ -112,6 +122,9 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
   void initState() {
     super.initState();
     currentRating = 0;
+    api = ApiClient('http://10.0.2.2:3000');
+    journalSvc = JournalService(api);
+    beansSvc = BeansService(api);
   }
 
   @override
@@ -146,6 +159,8 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                 notes: '',
               );
 
+
+
               final nullRecipe = Recipe(
                 id: '',
                 name: "",
@@ -158,13 +173,21 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                 pourAmounts: [],
               );
 
-              selectedBeans ??= nullBeans;
+              // ignore: prefer_conditional_assignment
+              if (selectedBeans == null) {
+                selectedBeans = nullBeans;
+                beansId = null;
+              } else {
+                beansId = selectedBeans!.id;
+              }
+
 
               selectedRecipe ??= nullRecipe;
 
+
               final journalEntry = JournalEntry(
                 id: '',
-                rating: currentRating.toString(),
+                rating: currentRating,
                 waterTemp: newTemp,
                 timeTaken: newTime,
                 grindSetting: newGrindSetting,
@@ -172,7 +195,30 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                 beans: selectedBeans!,
                 recipe: selectedRecipe!,
                 date: DateTime.now(),
+                recipeId: selectedRecipe!.name,
               );
+
+              try {
+                final res = await journalSvc.create(
+
+                  rating: currentRating,
+                  waterTemp: newTemp,
+                  timeTaken: newTime,
+                  grindSetting: newGrindSetting,
+                  notes: newNotes,
+                  beansId: beansId,
+                  date: DateTime.now(),
+                  recipeId: selectedRecipe!.name,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Created entry: ${res['_id']}')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e'), duration: Duration(minutes: 1),),
+                );
+                
+              }
 
               Journal journal = context.read<Journal>();
 

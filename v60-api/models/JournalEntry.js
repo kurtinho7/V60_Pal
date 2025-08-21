@@ -7,9 +7,10 @@ const journalEntrySchema = new mongoose.Schema({
   timeTaken:     { type: Number, required: true },
   grindSetting:  { type: String, required: true },
   notes:         { type: String, default: '' },
-  beans:         { type: mongoose.Schema.Types.ObjectId, ref: 'Beans' },
+  beans:         { type: mongoose.Schema.Types.ObjectId, ref: 'Beans', required: false },
   recipe:        { type: String, required: true },
-  date:          { type: Date, required: true},
+  date:          { type: Date, required: true, default: Date.now},
+  owner: { type: String, required: true, index: true } 
 }, {
   timestamps: true
 });

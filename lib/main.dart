@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:v60pal/AddBeansScreen.dart';
 import 'package:v60pal/AddJournalEntryScreen.dart';
+import 'package:v60pal/AuthGate.dart';
 import 'package:v60pal/BeansScreen.dart';
 import 'package:v60pal/BrewScreen.dart';
 import 'package:v60pal/JournalScreen.dart';
@@ -9,9 +10,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:v60pal/models/BeansList.dart';
 import 'package:v60pal/models/Journal.dart';
 import 'package:v60pal/Theme.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   final journal = Journal();
   final beansList = BeansList();
   await journal.init();
@@ -109,6 +115,14 @@ class _MyAppState extends State<MyApp> {
                       style: TextStyle(color: TEXT_COLOR),
                     ),
                   ),
+                  IconButton(onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AuthGate(),
+                        ),
+                      );
+                    }, icon: Icon(Icons.person))
                 ],
               ),
             ),
