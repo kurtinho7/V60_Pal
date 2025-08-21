@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:v60pal/Theme.dart';
+import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 
 class JournalEntryViewScreen extends StatefulWidget {
@@ -16,6 +17,26 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
   @override
   Widget build(BuildContext context) {
     final entry = widget.journalEntry;
+    final recipeId = entry.recipeId ?? 'Custom recipe';
+    final rating = entry.rating ?? 0;
+    final notes = entry.notes ?? '';
+    final dose = RECIPES.firstWhere((element) => element.name == entry.recipeId).coffeeDose;
+    final water = RECIPES.firstWhere((element) => element.name == entry.recipeId).waterWeightGrams;
+    final time = entry.timeTaken ?? 0;
+    final grind = entry.grindSetting ?? '';
+    final temp = entry.waterTemp ?? 0;
+    final beans = entry.beans ?? Beans(
+                id: '',
+                name: '',
+                origin: '',
+                roastLevel: '',
+                roastDate: DateTime(0, 0, 0, 0, 0, 0),
+                weight: 0,
+                notes: '',
+              );
+  
+
+
     return Container(
       height: 670,
       width: 400,
@@ -48,7 +69,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                     ),
                     RatingBar(
                       ignoreGestures: true,
-                      initialRating: double.parse(entry.rating),
+                      initialRating: (rating),
                       minRating: 0.5,
                       direction: Axis.horizontal,
                       allowHalfRating: true,
@@ -66,7 +87,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                 SizedBox(height: 20),
                 TextField(
                   decoration: InputDecoration(
-                    hintText: entry.notes,
+                    hintText: notes,
                     hintStyle: TextStyle(color: TEXT_COLOR),
                   ),
                   style: TextStyle(color: TEXT_COLOR),
@@ -102,7 +123,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      entry.recipe.name,
+                      recipeId,
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],
@@ -116,7 +137,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      entry.recipe.coffeeDose,
+                      dose,
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],
@@ -130,7 +151,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      "${entry.recipe.waterWeightGrams}g",
+                      "${water}g",
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],
@@ -144,7 +165,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      "${entry.timeTaken}s",
+                      "${time}s",
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],
@@ -158,7 +179,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      entry.grindSetting,
+                      entry.grindSetting!,
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],
@@ -172,7 +193,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      "${entry.waterTemp}",
+                      "${temp}",
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],
@@ -208,7 +229,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      entry.beans.name,
+                      beans.name,
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],

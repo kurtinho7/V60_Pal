@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 
 const beansSchema = new mongoose.Schema({
     name:        { type: String, required: true },
-    origin:     { type: String, required: true },
-    roastlevel:     { type: String, required: true },
-    roastDate:  { type: Date, required: true },
+    origin:     { type: String, required: false },
+    roastlevel:     { type: String, required: false },
+    roastDate:  { type: Date, required: false },
     notes:         { type: String, default: '' },
-    weight:         { type: Number, required: true },
+    weight:         { type: Number, required: false },
+    owner: { type: String, required: true, index: true } 
   }, {
     timestamps: true
   });

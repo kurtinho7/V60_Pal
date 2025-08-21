@@ -6,11 +6,24 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+const requireAuth = require('./middleware/requireAuth');
+const beansRoutes = require('./routes/beans');
+const journalRoutes = require('./routes/journalEntry');
+
+// Example: protect beans routes
+
 // 1) Connect to Atlas
 const uri = 'mongodb+srv://kurthymanyk7:qzZVNLgQsXTqY8NC@cluster0.u3j6pyo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(uri)
   .then(() => console.log('🗄️ MongoDB connected'))
   .catch(err => console.error(err));
+
+app.get('/health', (_req, res) => {
+    res.json({ ok: mongoose.connection.readyState === 1 });
+});
+
+app.use('/beans', requireAuth, beansRoutes);
+app.use('/journalEntries', requireAuth, journalRoutes);
 
 // 2) Define a Recipe schema
 const JournalEntry = require('./models/JournalEntry');
