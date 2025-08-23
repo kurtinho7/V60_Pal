@@ -2,14 +2,14 @@
 const mongoose = require('mongoose');
 
 const journalEntrySchema = new mongoose.Schema({
-  rating:        { type: String, required: true },
-  waterTemp:     { type: Number, required: true },
-  timeTaken:     { type: Number, required: true },
-  grindSetting:  { type: String, required: true },
-  notes:         { type: String, default: '' },
+  rating:        { type: String, required: false },
+  waterTemp:     { type: Number, required: false },
+  timeTaken:     { type: Number, required: false },
+  grindSetting:  { type: String, required: false },
+  notes:         { type: String, default: '', required: false },
   beans:         { type: mongoose.Schema.Types.ObjectId, ref: 'Beans', required: false },
-  recipe:        { type: String, required: true },
-  date:          { type: Date, required: true, default: Date.now},
+  recipe:        { type: String, required: false },
+  date:          { type: Date, required: false, default: Date.now},
   owner: { type: String, required: true, index: true } 
 }, {
   timestamps: true
