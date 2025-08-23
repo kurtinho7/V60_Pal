@@ -58,7 +58,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        textTheme: GoogleFonts.poppinsTextTheme(),
+        textTheme: GoogleFonts.overpassTextTheme(),
         colorScheme: COLOR_SCHEME,
         elevatedButtonTheme: ELEVATED_BUTTON_THEME,
       ),
