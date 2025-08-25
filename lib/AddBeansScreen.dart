@@ -35,7 +35,9 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
     'dark',
   ];
   String? _selectedRoast;
-  DateTime _roastDate = DateTime.now();
+  DateTime? _roastDate;
+
+  final todayDate = DateTime.now();
 
   @override
   void initState() {
@@ -74,26 +76,50 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
   void _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
-    final bean = Beans(
-      id: id,
-      name: _nameCtrl.text.trim(),
-      origin: _originCtrl.text.trim(),
-      roastLevel: _selectedRoast?.trim() ?? '',
-      roastDate: _roastDate,
-      weight: int.tryParse(_weightCtrl.text.trim()) ?? 0,
-      notes: _notesCtrl.text.trim(),
-    );
+    if (_nameCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Must Input a Name')));
+      return;
+    }
+
+    if (_roastDate == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Must Select a Roast Date')));
+      return;
+    }
+    final newOrigin = (_originCtrl.text.isEmpty) ? "" : _originCtrl.text;
+    final newRoast = (_selectedRoast == null) ? "" : _selectedRoast!;
+    final newWeight = (_weightCtrl.text.isEmpty)
+        ? 0
+        : int.parse(_weightCtrl.text);
+    final ttxt = _notesCtrl.text.trim();
+    final newNotes = ttxt.isEmpty ? '' : _notesCtrl.text;
 
     try {
-      final res = beansSvc.create(
+      final res = await beansSvc.create(
         name: _nameCtrl.text.trim(),
-        origin: _originCtrl.text.trim(),
-        roastLevel: _selectedRoast,
-        roastDate: _roastDate,
-        weight: int.tryParse(_weightCtrl.text.trim()) ?? 0,
-        notes: _notesCtrl.text.trim(),
+        origin: newOrigin.trim(),
+        roastLevel: newRoast,
+        roastDate: _roastDate!,
+        weight: newWeight,
+        notes: newNotes.trim(),
       );
+      final serverId = (res is Map && res['_id'] is String)
+          ? res['_id'] as String
+          : '';
+      final bean = Beans(
+        id: serverId,
+        name: _nameCtrl.text.trim(),
+        origin: newOrigin,
+        roastLevel: newRoast,
+        roastDate: _roastDate!,
+        weight: newWeight,
+        notes: newNotes,
+      );
+      final beansList = context.read<BeansList>();
+      await beansList.addEntry(bean);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Created Beans')));
@@ -103,10 +129,6 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
       ).showSnackBar(SnackBar(content: Text('Error $e')));
     }
 
-    final beansList = context.read<BeansList>();
-
-    await beansList.addEntry(bean);
-
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -115,6 +137,16 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
   @override
   Widget build(BuildContext context) {
     final textStyleHeader = TextStyle(color: TEXT_COLOR, fontSize: 20);
+    Widget todayText = Text(
+      "${todayDate.year}-${todayDate.month.toString().padLeft(2, '0')}-${todayDate.day.toString().padLeft(2, '0')}",
+      style: TextStyle(color: TEXT_COLOR),
+    );
+    if (_roastDate != null) {
+      todayText = Text(
+        "${_roastDate!.year}-${_roastDate!.month.toString().padLeft(2, '0')}-${_roastDate!.day.toString().padLeft(2, '0')}",
+        style: TextStyle(color: TEXT_COLOR),
+      );
+    }
 
     Widget card({required Widget child}) {
       return Container(
@@ -225,10 +257,7 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    "${_roastDate.year}-${_roastDate.month.toString().padLeft(2, '0')}-${_roastDate.day.toString().padLeft(2, '0')}",
-                                    style: TextStyle(color: TEXT_COLOR),
-                                  ),
+                                  todayText,
                                   const Icon(Icons.calendar_today, size: 18),
                                 ],
                               ),

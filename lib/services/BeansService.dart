@@ -34,4 +34,11 @@ class BeansService {
     }
     throw Exception('Create bean failed: ${res.statusCode} ${res.body}');
   }
+
+  Future<void> delete(String id) async {
+    final res = await api.delete('/beans/$id');
+    if (res.statusCode != 204) {
+      throw Exception('Delete failed: ${res.statusCode} ${res.body}');
+    }
+  }
 }

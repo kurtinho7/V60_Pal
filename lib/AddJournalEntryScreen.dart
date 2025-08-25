@@ -12,7 +12,6 @@ import 'package:v60pal/models/BeansList.dart';
 import 'package:v60pal/services/JournalEntryService.dart';
 import 'package:v60pal/services/BeansService.dart';
 
-
 class AddJournalEntryScreen extends StatefulWidget {
   const AddJournalEntryScreen({super.key});
   @override
@@ -20,85 +19,6 @@ class AddJournalEntryScreen extends StatefulWidget {
 }
 
 class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
-  final List<Recipe> _recipes = [
-    Recipe(
-      id: '',
-      name: "4:6 Method",
-      waterWeightGrams: 300,
-      waterTemp: 45,
-      pourSteps: [45, 90, 135, 180, 225],
-      coffeeDose: "20g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [60, 120, 180, 240, 300],
-    ),
-    Recipe(
-      id: '',
-      name: "James Hoffmann",
-      waterWeightGrams: 250,
-      waterTemp: 45,
-      pourSteps: [45, 70, 90, 110, 180],
-      coffeeDose: "15g",
-      grindSize: "medium-fine",
-      brewTime: "3:00",
-      pourAmounts: [50, 100, 150, 200, 250],
-    ),
-    Recipe(
-      id: '',
-      name: "Scott Rao",
-      waterWeightGrams: 340,
-      waterTemp: 45,
-      pourSteps: [60, 120, 180],
-      coffeeDose: "20g",
-      grindSize: "medium-fine",
-      brewTime: "1:50",
-      pourAmounts: [60, 210, 340],
-    ),
-    Recipe(
-      id: '',
-      name: "4:6",
-      waterWeightGrams: 225,
-      waterTemp: 45,
-      pourSteps: [45, 45, 45, 45, 45],
-      coffeeDose: "15g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [45, 45, 45, 45, 45],
-    ),
-    Recipe(
-      id: '',
-      name: "4:6",
-      waterWeightGrams: 225,
-      waterTemp: 45,
-      pourSteps: [45, 45, 45, 45, 45],
-      coffeeDose: "15g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [45, 45, 45, 45, 45],
-    ),
-    Recipe(
-      id: '',
-      name: "Onyx Method",
-      waterWeightGrams: 250,
-      waterTemp: 30,
-      pourSteps: [30, 90, 150],
-      coffeeDose: "15g",
-      grindSize: "medium-fine",
-      brewTime: "2:30",
-      pourAmounts: [50, 150, 250],
-    ),
-    Recipe(
-      id: '',
-      name: "4:6",
-      waterWeightGrams: 225,
-      waterTemp: 45,
-      pourSteps: [45, 45, 45, 45, 45],
-      coffeeDose: "15g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [45, 45, 45, 45, 45],
-    ),
-  ];
   double currentRating = 0;
 
   Beans? selectedBeans;
@@ -118,6 +38,24 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
   final TextEditingController myDoseController = TextEditingController();
   final TextEditingController myTimeController = TextEditingController();
 
+  int? _parseTimeToSeconds(String s) {
+    final t = s.trim();
+    if (t.isEmpty) return null;
+    if (RegExp(r'^\d+$').hasMatch(t)) {
+      // plain seconds
+      return int.tryParse(t);
+    }
+    final parts = t.split(':');
+    if (parts.length == 2) {
+      final m = int.tryParse(parts[0]);
+      final sec = int.tryParse(parts[1]);
+      if (m != null && sec != null && sec >= 0 && sec < 60) {
+        return m * 60 + sec;
+      }
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -136,6 +74,13 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
         actions: [
           IconButton(
             onPressed: () async {
+              if (selectedRecipe == null) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Must Select a Recipe')));
+                return;
+              }
+
               final newGrindSetting = (myGrindController.text.isEmpty)
                   ? ""
                   : myGrindController.text;
@@ -145,9 +90,10 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
               final newTemp = (myTempController.text.isEmpty)
                   ? 0
                   : int.parse(myTempController.text);
-              final newTime = (myTimeController.text.isEmpty)
+              final ttxt = myTimeController.text.trim();
+              final newTime = ttxt.isEmpty
                   ? 0
-                  : int.parse(myTimeController.text);
+                  : (_parseTimeToSeconds(ttxt) ?? 0);
 
               final nullBeans = Beans(
                 id: '',
@@ -158,8 +104,6 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                 weight: 0,
                 notes: '',
               );
-
-
 
               final nullRecipe = Recipe(
                 id: '',
@@ -181,10 +125,6 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                 beansId = selectedBeans!.id;
               }
 
-
-              selectedRecipe ??= nullRecipe;
-
-
               final journalEntry = JournalEntry(
                 id: '',
                 rating: currentRating,
@@ -200,7 +140,6 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
 
               try {
                 final res = await journalSvc.create(
-
                   rating: currentRating,
                   waterTemp: newTemp,
                   timeTaken: newTime,
@@ -215,9 +154,11 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e'), duration: Duration(minutes: 1),),
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    duration: Duration(minutes: 1),
+                  ),
                 );
-                
               }
 
               Journal journal = context.read<Journal>();
@@ -317,29 +258,28 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
               ),
               child: Column(
                 children: [
-                  SizedBox(
-                    width: 500,
-                    child: DropdownButton<Recipe>(
-                      hint: (selectedRecipe == null)
-                          ? Text('Select a Recipe')
-                          : Text(selectedRecipe!.name),
-                      value: selectedRecipe,
-                      menuWidth: 400,
-                      items: _recipes.map((recipe) {
-                        return DropdownMenuItem<Recipe>(
-                          value: recipe,
-                          child: Text(
-                            recipe.name,
-                            style: TextStyle(color: TEXT_COLOR),
-                          ), // show whatever field makes sense
-                        );
-                      }).toList(),
-                      onChanged: (Recipe? recipe) {
-                        setState(() {
-                          selectedRecipe = recipe;
-                        });
-                      },
+                  DropdownButtonFormField(
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Select a recipe',
                     ),
+                    value: selectedRecipe,
+                    items: RECIPES.map((recipe) {
+                      return DropdownMenuItem<Recipe>(
+                        value: recipe,
+                        child: Text(
+                          recipe.name,
+                          style: TextStyle(color: TEXT_COLOR),
+                        ), // show whatever field makes sense
+                      );
+                    }).toList(),
+                    onChanged: (Recipe? recipe) {
+                      setState(() {
+                         debugPrint('picked: ${recipe?.id} ${recipe?.name}');
+                          selectedRecipe = recipe;
+                          debugPrint('matches item? ${RECIPES.any((x) => identical(x, recipe) || x == recipe)}');
+                      });
+                    },
                   ),
                   SizedBox(height: 12),
                   Row(
@@ -449,7 +389,7 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                       Expanded(
                         child: TextField(
                           decoration: InputDecoration(
-                            hintText: 'Temp',
+                            hintText: 'Temp (\u00B0C)',
                             hintStyle: TextStyle(color: Colors.white38),
                             hintTextDirection: TextDirection.rtl,
                             border: InputBorder.none,

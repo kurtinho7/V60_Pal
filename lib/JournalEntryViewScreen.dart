@@ -20,8 +20,8 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
     final recipeId = entry.recipeId ?? 'Custom recipe';
     final rating = entry.rating ?? 0;
     final notes = entry.notes ?? '';
-    final dose = RECIPES.firstWhere((element) => element.name == entry.recipeId).coffeeDose;
-    final water = RECIPES.firstWhere((element) => element.name == entry.recipeId).waterWeightGrams;
+    final dose = (entry.recipeId == "")? "0" : RECIPES.firstWhere((element) => element.name == entry.recipeId).coffeeDose;
+    final water = (entry.recipeId == "")? 0 :RECIPES.firstWhere((element) => element.name == entry.recipeId).waterWeightGrams;
     final time = entry.timeTaken ?? 0;
     final grind = entry.grindSetting ?? '';
     final temp = entry.waterTemp ?? 0;

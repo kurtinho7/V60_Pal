@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:v60pal/ApiClient.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/BeansList.dart';
 import 'package:intl/intl.dart';
+import 'package:v60pal/services/BeansService.dart';
+
+enum BeansAction { edit, delete }
 
 class BeansScreen extends StatefulWidget {
   const BeansScreen({super.key});
@@ -15,6 +19,18 @@ class BeansScreen extends StatefulWidget {
 class _BeansScreenState extends State<BeansScreen> {
   // How many days until beans are considered "0% fresh".
   static const int freshnessWindowDays = 30;
+
+  late ApiClient api;
+  late BeansService beansSvc;
+
+  
+
+  @override
+  void initState() {
+    super.initState();
+    api = ApiClient('http://10.0.2.2:3000');
+    beansSvc = BeansService(api);
+  }
 
   double _freshnessPercent(DateTime roastDate) {
     final now = DateTime.now();
@@ -38,6 +54,106 @@ class _BeansScreenState extends State<BeansScreen> {
     if (days <= 0) return 'Roasted today';
     if (days == 1) return 'Roasted 1 day ago';
     return 'Roasted $days days ago';
+  }
+
+  Future<void> _deleteAt(String id) async {
+    final beansList = context.read<BeansList>();
+    final removedIndex = beansList.entries.indexWhere((b) => b.id == id);
+    final removed = beansList.entries[removedIndex];
+
+    // Optimistic local removal
+    await beansList.removeEntry(removed.id);
+    try {
+      if (removed.id.isNotEmpty) {
+        await beansSvc.delete(removed.id);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Entry deleted'),
+          action: SnackBarAction(
+            label: 'UNDO',
+            onPressed: () async {
+              // naive undo to end; adapt if you want same position
+              await beansList.addEntry(removed);
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      // rollback on API failure
+      await beansList.addEntry(removed);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Delete failed: $e')),
+      );
+    }
+  }
+
+  Future<BeansAction?> showBeansActions(BuildContext context, Beans bean) {
+    return showModalBottomSheet<BeansAction>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: false,
+      showDragHandle: true, // optional (Flutter 3.13+)
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Sheet card
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.edit_outlined),
+                      title: const Text('Edit'),
+                      onTap: () => Navigator.pop(ctx, BeansAction.edit),
+                    ),
+                    const Divider(height: 0),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.redAccent,
+                      ),
+                      title: const Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.redAccent),
+                      ),
+                      onTap: () => Navigator.pop(ctx, BeansAction.delete),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Cancel button
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.close),
+                  title: const Text('Cancel'),
+                  onTap: () => Navigator.pop(ctx, null),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -86,9 +202,44 @@ class _BeansScreenState extends State<BeansScreen> {
 
                     return InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        // TODO: push to a Beans detail screen, or edit.
-                        // Navigator.push(context, MaterialPageRoute(builder: (_) => BeansDetailScreen(bean: b)));
+                      onTap: () async {
+                        final action = await showBeansActions(context, b);
+                        if (action == null) return;
+
+                        switch (action) {
+                          case BeansAction.edit:
+                            // open edit flow
+                            break;
+                          case BeansAction.delete:
+                            // TODO: Handle this case.
+                            final ok =
+                                await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete beans?'),
+                                    content: Text(
+                                      'This will remove "${b.name.isNotEmpty ? b.name : 'these beans'}".',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, true),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  ),
+                                ) ??
+                                false;
+                            if (ok) {
+                              _deleteAt(b.id);
+                            }
+                            break;
+                        }
                       },
                       child: Container(
                         decoration: BoxDecoration(
@@ -137,8 +288,8 @@ class _BeansScreenState extends State<BeansScreen> {
                                     border: Border.all(color: Colors.white24),
                                   ),
                                   child: Text(
-                                    b.roastLevel.isNotEmpty
-                                        ? b.roastLevel
+                                    (b.roastLevel?.isNotEmpty ?? false)
+                                        ? b.roastLevel!
                                         : '—',
                                     style: TextStyle(
                                       color: TEXT_COLOR,
@@ -151,7 +302,9 @@ class _BeansScreenState extends State<BeansScreen> {
                             const SizedBox(height: 6),
                             // Subheader
                             Text(
-                              b.origin.isNotEmpty ? b.origin : 'Origin unknown',
+                              b.origin!.isNotEmpty
+                                  ? b.origin!
+                                  : 'Origin unknown',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -206,6 +359,24 @@ class _BeansScreenState extends State<BeansScreen> {
                                       ),
                                     ),
                                   ),
+                                  SizedBox(height: 14),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.scale,
+                                        size: 16,
+                                        color: TEXT_COLOR,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        (b.weight! > 0) ? '${b.weight} g' : '—',
+                                        style: TextStyle(
+                                          color: TEXT_COLOR,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -223,16 +394,6 @@ class _BeansScreenState extends State<BeansScreen> {
                                 const SizedBox(width: 6),
                                 Text(
                                   roastDateStr,
-                                  style: TextStyle(
-                                    color: TEXT_COLOR,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Icon(Icons.scale, size: 16, color: TEXT_COLOR),
-                                const SizedBox(width: 6),
-                                Text(
-                                  (b.weight > 0) ? '${b.weight} g' : '—',
                                   style: TextStyle(
                                     color: TEXT_COLOR,
                                     fontSize: 12,
