@@ -20,7 +20,7 @@ final MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 final List<Recipe> RECIPES = [
     Recipe(
-      id: '',
+      id: '0',
       name: "4:6 Method",
       waterWeightGrams: 300,
       waterTemp: 45,
@@ -31,7 +31,7 @@ final List<Recipe> RECIPES = [
       pourAmounts: [60, 120, 180, 240, 300],
     ),
     Recipe(
-      id: '',
+      id: '1',
       name: "James Hoffmann",
       waterWeightGrams: 250,
       waterTemp: 45,
@@ -42,7 +42,7 @@ final List<Recipe> RECIPES = [
       pourAmounts: [50, 100, 150, 200, 250],
     ),
     Recipe(
-      id: '',
+      id: '2',
       name: "Scott Rao",
       waterWeightGrams: 340,
       waterTemp: 45,
@@ -53,7 +53,7 @@ final List<Recipe> RECIPES = [
       pourAmounts: [60, 210, 340],
     ),
     Recipe(
-      id: '',
+      id: '3',
       name: "4:6",
       waterWeightGrams: 225,
       waterTemp: 45,
@@ -64,7 +64,7 @@ final List<Recipe> RECIPES = [
       pourAmounts: [45, 45, 45, 45, 45],
     ),
     Recipe(
-      id: '',
+      id: '4',
       name: "4:6",
       waterWeightGrams: 225,
       waterTemp: 45,
@@ -75,7 +75,7 @@ final List<Recipe> RECIPES = [
       pourAmounts: [45, 45, 45, 45, 45],
     ),
     Recipe(
-      id: '',
+      id: '5',
       name: "Onyx Method",
       waterWeightGrams: 250,
       waterTemp: 30,
@@ -86,7 +86,7 @@ final List<Recipe> RECIPES = [
       pourAmounts: [50, 150, 250],
     ),
     Recipe(
-      id: '',
+      id: '6',
       name: "4:6",
       waterWeightGrams: 225,
       waterTemp: 45,
