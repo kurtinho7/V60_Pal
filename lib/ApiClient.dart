@@ -49,4 +49,15 @@ class ApiClient {
     };
     return http.delete(Uri.parse('$baseUrl$path'), headers: headers);
   }
+
+  Future<http.Response> patch(String path, Map<String, dynamic> body) async{
+    final token = await _idToken();
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+    return http.patch(Uri.parse('$baseUrl$path'),
+      headers: headers,
+      body: jsonEncode(body));
+}
 }

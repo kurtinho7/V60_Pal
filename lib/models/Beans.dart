@@ -79,4 +79,9 @@ class Beans {
       roastDate: parseRoastDate(j['roastDate']),
     );
   }
+
+  Beans copyWith(int newWeight) {
+    return Beans(id: id, name: name, origin: origin, roastLevel: roastLevel, roastDate: roastDate, weight: newWeight, notes: notes );
+  }
+
 }

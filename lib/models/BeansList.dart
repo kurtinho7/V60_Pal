@@ -36,4 +36,12 @@ class BeansList extends ChangeNotifier{
     notifyListeners();
   }
 
+  Future<void> editEntry(String id, int newWeight) async {
+    final entry = _entries.firstWhere((element) => element.id == id);
+    Beans editedBeans = entry.copyWith(newWeight);
+    removeEntry(id);
+    addEntry(editedBeans);
+    notifyListeners();
+  }
+
 }
