@@ -73,6 +73,28 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
     }
   }
 
+  bool _isMongoId(String? s) =>
+    s != null && RegExp(r'^[a-fA-F0-9]{24}$').hasMatch(s);
+
+String? _extractId(dynamic json) {
+  if (json is Map<String, dynamic>) {
+    final direct = json['_id'] ?? json['id'];
+    if (direct is String && direct.isNotEmpty) return direct;
+    if (direct is Map && direct[r'$oid'] is String) return direct[r'$oid'] as String;
+
+    final inserted = json['insertedId'];
+    if (inserted is String) return inserted;
+    if (inserted is Map && inserted[r'$oid'] is String) return inserted[r'$oid'] as String;
+
+    for (final key in ['bean', 'data', 'result']) {
+      final nested = json[key];
+      final id = _extractId(nested);
+      if (id != null) return id;
+    }
+  }
+  return null;
+}
+
   void _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -106,11 +128,10 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
         weight: newWeight,
         notes: newNotes.trim(),
       );
-      final serverId = (res is Map && res['_id'] is String)
-          ? res['_id'] as String
-          : '';
+      final serverId = _extractId(res);
+      print('$serverId is the server id');
       final bean = Beans(
-        id: serverId,
+        id: serverId!,
         name: _nameCtrl.text.trim(),
         origin: newOrigin,
         roastLevel: newRoast,

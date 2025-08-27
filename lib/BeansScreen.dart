@@ -23,7 +23,7 @@ class _BeansScreenState extends State<BeansScreen> {
   late ApiClient api;
   late BeansService beansSvc;
 
-  
+  TextEditingController editController = TextEditingController();
 
   @override
   void initState() {
@@ -84,10 +84,27 @@ class _BeansScreenState extends State<BeansScreen> {
       // rollback on API failure
       await beansList.addEntry(removed);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
     }
+  }
+
+  void editBeans(String id) async {
+    if (editController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Must Input an Amount')));
+      return;
+    }
+
+    final newAmount = editController.text;
+    final newAmountInt = int.parse(newAmount);
+
+
+    beansSvc.update(id, weight: newAmountInt);
+    final beansList = context.read<BeansList>();
+    await beansList.editEntry(id, newAmountInt);
   }
 
   Future<BeansAction?> showBeansActions(BuildContext context, Beans bean) {
@@ -161,6 +178,7 @@ class _BeansScreenState extends State<BeansScreen> {
     final beansList = context.watch<BeansList>();
     final beans = List<Beans>.from(beansList.entries)
       ..sort((a, b) => b.roastDate.compareTo(a.roastDate)); // newest first
+    
 
     return Scaffold(
       body: beans.isEmpty
@@ -208,7 +226,40 @@ class _BeansScreenState extends State<BeansScreen> {
 
                         switch (action) {
                           case BeansAction.edit:
-                            // open edit flow
+                            await showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text(
+                                  'Edit Beans Amount',
+                                  style: TextStyle(color: TEXT_COLOR),
+                                ),
+                                content: TextField(
+                                  controller: editController,
+                                  style: TextStyle(color: TEXT_COLOR),
+                                  decoration: InputDecoration(
+                                    hintText: 'New Amount (g)',
+                                    hintStyle: const TextStyle(
+                                      color: Colors.white38,
+                                    ),
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () {
+                                      print('${b.id} is the bean id');
+                                      editBeans(b.id);
+                                      Navigator.pop(ctx, false);
+                                    },
+                                    child: const Text('Confirm'),
+                                  ),
+                                ],
+                              ),
+                            );
                             break;
                           case BeansAction.delete:
                             // TODO: Handle this case.
