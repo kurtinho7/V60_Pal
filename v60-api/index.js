@@ -13,7 +13,7 @@ const journalRoutes = require('./routes/journalEntry');
 // Example: protect beans routes
 
 // 1) Connect to Atlas
-const uri = 'mongodb+srv://kurthymanyk7:qzZVNLgQsXTqY8NC@cluster0.u3j6pyo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const uri = '';
 mongoose.connect(uri)
   .then(() => console.log('🗄️ MongoDB connected'))
   .catch(err => console.error(err));
