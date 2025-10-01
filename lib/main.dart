@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:v60pal/AddBeansScreen.dart';
@@ -15,9 +16,7 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final journal = Journal();
   final beansList = BeansList();
   await journal.init();
@@ -56,6 +55,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = FirebaseAuth.instance;
     return MaterialApp(
       theme: ThemeData(
         textTheme: GoogleFonts.overpassTextTheme(),
@@ -108,24 +108,51 @@ class _MyAppState extends State<MyApp> {
             ),
             endDrawer: Drawer(
               child: ListView(
+                padding: EdgeInsets.zero, // no extra padding from ListView
                 children: [
-                  DrawerHeader(
+                  // Custom header (instead of DrawerHeader)
+                  Container(
+                    color: Colors.blue, // optional background color
+                    padding: EdgeInsets.all(23), // tweak spacing around text
+                    alignment: Alignment.centerLeft,
                     child: Text(
                       'Settings',
-                      style: TextStyle(color: TEXT_COLOR),
+                      style: TextStyle(
+                        color: TEXT_COLOR,
+                        fontSize: 24,
+                      ),
                     ),
                   ),
-                  IconButton(onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AuthGate(),
-                        ),
+
+                  // Next child right below without blank space
+                  StreamBuilder(
+                    stream: auth.authStateChanges(),
+                    initialData: auth.currentUser,
+                    builder: (context, snap) {
+                      final user = snap.data;
+                      final signInText = user?.email ?? 'Sign In';
+                      return Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.person, size: 24,),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AuthGate(),
+                                ),
+                              );
+                            },
+                          ),
+                          Text(signInText, style: TextStyle(color: TEXT_COLOR, fontSize: 16)),
+                        ],
                       );
-                    }, icon: Icon(Icons.person))
+                    },
+                  ),
                 ],
               ),
             ),
+
             body: screens[selectedIndex], // Display selected screen
             bottomNavigationBar: BottomNavigationBar(
               currentIndex: selectedIndex,

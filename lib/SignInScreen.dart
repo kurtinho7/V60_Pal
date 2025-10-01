@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:v60pal/Theme.dart';
+import 'package:v60pal/models/BeansList.dart';
+import 'package:v60pal/models/Journal.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -29,10 +32,18 @@ class _SignInScreenState extends State<SignInScreen> {
     } finally {
       if (mounted) setState(() => busy = false);
     }
+
+    final journal = context.read<Journal>();
+    final beans = context.read<BeansList>();
+
+    journal.init();
+    beans.init();
   }
 
   @override
   Widget build(BuildContext context) {
+    final journal = context.read<Journal>();
+    final beans = context.read<BeansList>();
     return Scaffold(
       appBar: AppBar(title: const Text('Sign in')),
       body: Padding(

@@ -193,7 +193,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                     Text(
-                      "${temp}",
+                      "$temp",
                       style: TextStyle(color: TEXT_COLOR, fontSize: 18),
                     ),
                   ],

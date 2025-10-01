@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/BrewTimerPage.dart';
 
@@ -25,97 +26,6 @@ class _BrewScreenState extends State<BrewScreen> {
     Icons.adjust,
   ];
 
-  final List<String> _labels = [
-    "4:6 Method",
-    "James Hoffmann",
-    "Scott Rao",
-    "Hario",
-    "Lance Hendricks",
-    "Onyx Method",
-    "Placeholder",
-    "Placeholder",
-    "Placeholder",
-  ];
-
-  final List<Recipe> _recipes = [
-    Recipe(
-      id: '',
-      name: "4:6 Method",
-      waterWeightGrams: 300,
-      waterTemp: 45,
-      pourSteps: [45, 90, 135, 180, 225],
-      coffeeDose: "20g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [60, 120, 180, 240, 300],
-    ),
-    Recipe(
-      id: '',
-      name: "James Hoffmann",
-      waterWeightGrams: 250,
-      waterTemp: 45,
-      pourSteps: [45, 70, 90, 110, 180],
-      coffeeDose: "15g",
-      grindSize: "medium-fine",
-      brewTime: "3:00",
-      pourAmounts: [50, 100, 150, 200, 250],
-    ),
-    Recipe(
-      id: '',
-      name: "Scott Rao",
-      waterWeightGrams: 340,
-      waterTemp: 45,
-      pourSteps: [60, 120, 180],
-      coffeeDose: "20g",
-      grindSize: "medium-fine",
-      brewTime: "1:50",
-      pourAmounts: [60, 210, 340],
-    ),
-    Recipe(
-      id: '',
-      name: "4:6",
-      waterWeightGrams: 225,
-      waterTemp: 45,
-      pourSteps: [45, 45, 45, 45, 45],
-      coffeeDose: "15g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [45, 45, 45, 45, 45],
-    ),
-    Recipe(
-      id: '',
-      name: "4:6",
-      waterWeightGrams: 225,
-      waterTemp: 45,
-      pourSteps: [45, 45, 45, 45, 45],
-      coffeeDose: "15g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [45, 45, 45, 45, 45],
-    ),
-    Recipe(
-      id: '',
-      name: "Onyx Method",
-      waterWeightGrams: 250,
-      waterTemp: 30,
-      pourSteps: [30, 90, 150],
-      coffeeDose: "15g",
-      grindSize: "medium-fine",
-      brewTime: "2:30",
-      pourAmounts: [50, 150, 250],
-    ),
-    Recipe(
-      id: '',
-      name: "4:6",
-      waterWeightGrams: 225,
-      waterTemp: 45,
-      pourSteps: [45, 45, 45, 45, 45],
-      coffeeDose: "15g",
-      grindSize: "fine",
-      brewTime: "1:50",
-      pourAmounts: [45, 45, 45, 45, 45],
-    ),
-  ];
 
   // Only one selected at a time; -1 means “none”
   int _selectedIndex = -1;
@@ -132,7 +42,7 @@ class _BrewScreenState extends State<BrewScreen> {
     if (_selectedIndex == -1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please select one first."),
+          content: Text("Please select a recipe first!"),
           duration: Duration(seconds: 1),
         ),
       );
@@ -142,7 +52,7 @@ class _BrewScreenState extends State<BrewScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BrewTimerPage(recipe: _recipes[_selectedIndex]),
+        builder: (context) => BrewTimerPage(recipe: RECIPES[_selectedIndex]),
       ),
     );
   }
@@ -160,7 +70,7 @@ class _BrewScreenState extends State<BrewScreen> {
                 crossAxisCount: 3,
                 mainAxisSpacing: 60,
                 crossAxisSpacing: 16,
-                children: List.generate(_icons.length, (i) {
+                children: List.generate(RECIPES.length, (i) {
                   final selected = i == _selectedIndex;
                   return Column(
                     children: [
@@ -182,7 +92,7 @@ class _BrewScreenState extends State<BrewScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _labels[i],
+                        RECIPES[i].name,
                         style: TextStyle(
                           fontSize: 12,
                           color: selected ? Colors.blueAccent : Colors.white54,

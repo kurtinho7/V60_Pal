@@ -56,8 +56,9 @@ class BeansService {
 
   final body = <String, dynamic>{};
   void put(String k, dynamic v) {
-    if (includeNulls) body[k] = v;
-    else if (v != null) body[k] = v;
+    if (includeNulls) {
+      body[k] = v;
+    } else if (v != null) body[k] = v;
   }
   put('name', name);
   put('origin', origin);

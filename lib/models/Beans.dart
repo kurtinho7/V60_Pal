@@ -36,7 +36,7 @@ class Beans {
         'name':       name,
         'origin':     origin,
         'roastLevel': roastLevel,
-        'roastDate' : roastDate!.toIso8601String(),
+        'roastDate' : roastDate.toIso8601String(),
         'weight' : weight,
         'notes' : notes,
       };

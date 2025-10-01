@@ -36,15 +36,22 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { loading = true; error = null; });
+    setState(() {
+      loading = true;
+      error = null;
+    });
     try {
       // If you also want to sync the provider here, expose a Journal.reloadFromApi()
-      await Future<void>.delayed(const Duration(milliseconds: 250)); // tiny grace for nicer spinner
+      await Future<void>.delayed(
+        const Duration(milliseconds: 250),
+      ); // tiny grace for nicer spinner
     } catch (e) {
       error = e.toString();
     } finally {
       if (!mounted) return;
-      setState(() { loading = false; });
+      setState(() {
+        loading = false;
+      });
     }
   }
 
@@ -76,16 +83,16 @@ class _JournalScreenState extends State<JournalScreen> {
       // rollback on API failure
       await journal.addEntry(removed);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final journal = context.watch<Journal>();
-    final entries = List<JournalEntry>.from(journal.entries.reversed); // newest first
+    final entries = List<JournalEntry>.from(journal.entries); // newest first
 
     return Scaffold(
       body: RefreshIndicator(
@@ -98,10 +105,7 @@ class _JournalScreenState extends State<JournalScreen> {
                 return const _JournalSkeletonList();
               }
               if (error != null) {
-                return _ErrorState(
-                  message: error!,
-                  onRetry: _load,
-                );
+                return _ErrorState(message: error!, onRetry: _load);
               }
               if (entries.isEmpty) {
                 return const _EmptyState();
@@ -118,9 +122,15 @@ class _JournalScreenState extends State<JournalScreen> {
                       : 'Custom recipe';
 
                   return Dismissible(
-                    key: Key('jrnl-${entry.date.toIso8601String()}'),
+                    key: ValueKey(
+                      entry.id.isNotEmpty
+                          ? entry.id
+                          : '${entry.date.microsecondsSinceEpoch}_${i}',
+                    ),
                     direction: DismissDirection.endToStart,
-                    dismissThresholds: const { DismissDirection.endToStart: 0.35 },
+                    dismissThresholds: const {
+                      DismissDirection.endToStart: 0.35,
+                    },
                     background: const SizedBox.shrink(),
                     secondaryBackground: Container(
                       decoration: BoxDecoration(
@@ -134,26 +144,50 @@ class _JournalScreenState extends State<JournalScreen> {
                         children: [
                           Icon(Icons.delete, color: Colors.white),
                           SizedBox(width: 8),
-                          Text('Delete Entry', style: TextStyle(color: Colors.white)),
+                          Text(
+                            'Delete Entry',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ],
                       ),
                     ),
                     confirmDismiss: (dir) async {
-                      return await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Delete this entry?'),
-                          content: const Text('This cannot be undone (unless you tap UNDO).'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
-                          ],
-                        ),
-                      ) ?? false;
+                      final ok = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(
+                                'Delete this entry?',
+                                style: TextStyle(color: TEXT_COLOR),
+                              ),
+                              content: Text(
+                                'This cannot be undone (unless you tap UNDO).',
+                                style: TextStyle(color: TEXT_COLOR),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          ) ??
+                          false;
+
+                          if (!ok) return false;
+
+                          _deleteAt(context, entries.length - 1 - i);
+
+                          return true;
+                          
+                          
                     },
-                    onDismissed: (_) => _deleteAt(context, entries.length - 1 - i),
+                    onDismissed: (_) {},
                     child: _JournalCard(
-                      month: MONTHS[entry.date.month],
+                      month: MONTHS[entry.date.month - 1],
                       day: entry.date.day.toString(),
                       title: recipeLabel,
                       rating: entry.rating!,
@@ -165,7 +199,8 @@ class _JournalScreenState extends State<JournalScreen> {
                         Navigator.push(
                           context,
                           ModalBottomSheetRoute(
-                            builder: (context) => JournalEntryViewScreen(journalEntry: entry),
+                            builder: (context) =>
+                                JournalEntryViewScreen(journalEntry: entry),
                             isScrollControlled: true,
                           ),
                         );
@@ -219,7 +254,13 @@ class _JournalCard extends StatelessWidget {
           color: Colors.white10,
           border: Border.all(color: Colors.white24),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: const [BoxShadow(blurRadius: 6, offset: Offset(0, 3), color: Colors.black26)],
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 6,
+              offset: Offset(0, 3),
+              color: Colors.black26,
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -259,7 +300,9 @@ class _JournalCard extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(right: 2),
                           child: Icon(
-                            filled ? Icons.star : (half ? Icons.star_half : Icons.star_border),
+                            filled
+                                ? Icons.star
+                                : (half ? Icons.star_half : Icons.star_border),
                             size: 16,
                             color: PRIMARY_COLOR,
                           ),
@@ -272,9 +315,18 @@ class _JournalCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _SpecChip(icon: Icons.local_fire_department, label: '${tempC > 0 ? '$tempC°C' : '—'}'),
-                      _SpecChip(icon: Icons.timer_outlined, label: timeSec > 0 ? '$mm:$ss' : '—'),
-                      _SpecChip(icon: Icons.settings, label: grind.isNotEmpty ? grind : '—'),
+                      _SpecChip(
+                        icon: Icons.local_fire_department,
+                        label: tempC > 0 ? '$tempC°C' : '—',
+                      ),
+                      _SpecChip(
+                        icon: Icons.timer_outlined,
+                        label: timeSec > 0 ? '$mm:$ss' : '—',
+                      ),
+                      _SpecChip(
+                        icon: Icons.settings,
+                        label: grind.isNotEmpty ? grind : '—',
+                      ),
                     ],
                   ),
                   // Notes (one line)
@@ -284,7 +336,10 @@ class _JournalCard extends StatelessWidget {
                       notes,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: TEXT_COLOR.withOpacity(0.85), fontSize: 13),
+                      style: TextStyle(
+                        color: TEXT_COLOR.withOpacity(0.85),
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ],
@@ -315,8 +370,22 @@ class _DateBadge extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(month, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
-          Text(day, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+          Text(
+            month,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            day,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -342,7 +411,10 @@ class _SpecChip extends StatelessWidget {
         children: [
           Icon(icon, size: 14),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Colors.white),
+          ),
         ],
       ),
     );
@@ -361,9 +433,15 @@ class _EmptyState extends StatelessWidget {
           children: [
             const Icon(Icons.coffee_outlined, size: 56),
             const SizedBox(height: 12),
-            Text('No journal entries yet', style: TextStyle(color: TEXT_COLOR, fontSize: 16)),
+            Text(
+              'No journal entries yet',
+              style: TextStyle(color: TEXT_COLOR, fontSize: 16),
+            ),
             const SizedBox(height: 6),
-            Text('Add one from the brew screen after your next cup ☕', style: TextStyle(color: Colors.white70)),
+            Text(
+              'Add one from the brew screen after your next cup ☕',
+              style: TextStyle(color: Colors.white70),
+            ),
           ],
         ),
       ),
@@ -386,9 +464,16 @@ class _ErrorState extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
             const SizedBox(height: 12),
-            Text('Something went wrong', style: TextStyle(color: TEXT_COLOR, fontSize: 16)),
+            Text(
+              'Something went wrong',
+              style: TextStyle(color: TEXT_COLOR, fontSize: 16),
+            ),
             const SizedBox(height: 6),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+            ),
             const SizedBox(height: 12),
             FilledButton(onPressed: onRetry, child: const Text('Retry')),
           ],

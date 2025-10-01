@@ -189,7 +189,7 @@ String? _extractId(dynamic json) {
       );
     }
 
-    InputDecoration _dec(String hint) => InputDecoration(
+    InputDecoration dec(String hint) => InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white38),
       border: InputBorder.none,
@@ -230,13 +230,13 @@ String? _extractId(dynamic json) {
                     TextField(
                       controller: _nameCtrl,
                       style: TextStyle(color: TEXT_COLOR),
-                      decoration: _dec('Name (e.g., Ethiopia Koke)'),
+                      decoration: dec('Name (e.g., Ethiopia Koke)'),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _originCtrl,
                       style: TextStyle(color: TEXT_COLOR),
-                      decoration: _dec('Origin (e.g., Ethiopia, Guatemala)'),
+                      decoration: dec('Origin (e.g., Ethiopia, Guatemala)'),
                     ),
                     const SizedBox(height: 12),
                     // Roast level (dropdown) + date picker in a row
@@ -244,7 +244,7 @@ String? _extractId(dynamic json) {
                       children: [
                         Expanded(
                           child: InputDecorator(
-                            decoration: _dec('Roast Level'),
+                            decoration: dec('Roast Level'),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
                                 value: _selectedRoast,
@@ -273,7 +273,7 @@ String? _extractId(dynamic json) {
                           child: InkWell(
                             onTap: _pickRoastDate,
                             child: InputDecorator(
-                              decoration: _dec('Roast Date'),
+                              decoration: dec('Roast Date'),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -311,7 +311,7 @@ String? _extractId(dynamic json) {
                             textAlign: TextAlign.right,
                             textDirection: TextDirection.rtl,
                             style: TextStyle(color: TEXT_COLOR),
-                            decoration: _dec('Weight (g)'),
+                            decoration: dec('Weight (g)'),
                             keyboardType: TextInputType.number,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
@@ -335,7 +335,7 @@ String? _extractId(dynamic json) {
                       controller: _notesCtrl,
                       style: TextStyle(color: TEXT_COLOR),
                       maxLines: null,
-                      decoration: _dec('Tasting notes, brew tips, etc.'),
+                      decoration: dec('Tasting notes, brew tips, etc.'),
                     ),
                   ],
                 ),
