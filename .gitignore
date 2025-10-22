@@ -11,6 +11,8 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+v60-api/.env
+v60-api/serviceAccountKey.json
 
 # IntelliJ related
 *.iml

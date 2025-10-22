@@ -18,7 +18,7 @@ class BeansScreen extends StatefulWidget {
 
 class _BeansScreenState extends State<BeansScreen> {
   // How many days until beans are considered "0% fresh".
-  static const int freshnessWindowDays = 30;
+  static const int freshnessWindowDays = 45;
 
   late ApiClient api;
   late BeansService beansSvc;
