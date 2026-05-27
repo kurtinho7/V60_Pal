@@ -236,9 +236,14 @@ class _MyAppState extends State<MyApp> {
                         leading: const Icon(Icons.person_outline),
                         title: Text(signInText),
                         onTap: () {
+                          Navigator.pop(context);
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const AuthGate()),
+                            MaterialPageRoute(
+                              builder: (_) => AuthGate(
+                                showSignOutWhenSignedIn: user != null,
+                              ),
+                            ),
                           );
                         },
                       );

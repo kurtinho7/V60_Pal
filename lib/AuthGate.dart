@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'SignInScreen.dart';
 
 class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
+  final bool showSignOutWhenSignedIn;
+
+  const AuthGate({super.key, this.showSignOutWhenSignedIn = false});
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +18,36 @@ class AuthGate extends StatelessWidget {
           );
         }
         final user = snap.data;
-        return user == null ? const SignInScreen() : ChooseIfSignedIn();
+        if (user == null) return const SignInScreen();
+        return showSignOutWhenSignedIn
+            ? const ChooseIfSignedIn()
+            : const _CloseAfterSignIn();
       },
     );
+  }
+}
+
+class _CloseAfterSignIn extends StatefulWidget {
+  const _CloseAfterSignIn();
+
+  @override
+  State<_CloseAfterSignIn> createState() => _CloseAfterSignInState();
+}
+
+class _CloseAfterSignInState extends State<_CloseAfterSignIn> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
 

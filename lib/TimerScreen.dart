@@ -169,44 +169,58 @@ class _TimerScreenState extends State<TimerScreen>
                   color: BUTTON_COLOR.withValues(alpha: 0.55),
                   child: Column(
                     children: [
-                      SizedBox(
-                        width: 260,
-                        height: 260,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedBuilder(
-                              animation: stepController,
-                              builder: (context, _) =>
-                                  CircularProgressIndicator(
-                                    value: stepController.value,
-                                    strokeWidth: 16,
-                                    backgroundColor: SURFACE_COLOR,
-                                    color: PRIMARY_COLOR,
-                                    strokeCap: StrokeCap.round,
-                                  ),
-                            ),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final timerSize = constraints.maxWidth.clamp(
+                            300.0,
+                            340.0,
+                          );
+
+                          return SizedBox(
+                            width: timerSize,
+                            height: timerSize,
+                            child: Stack(
+                              alignment: Alignment.center,
                               children: [
-                                Text(
-                                  formatTime(elapsedSeconds),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(fontSize: 46),
+                                Positioned.fill(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: AnimatedBuilder(
+                                      animation: stepController,
+                                      builder: (context, _) =>
+                                          CircularProgressIndicator(
+                                            value: stepController.value,
+                                            strokeWidth: 18,
+                                            backgroundColor: SURFACE_COLOR,
+                                            color: PRIMARY_COLOR,
+                                            strokeCap: StrokeCap.round,
+                                          ),
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  currentBrewAmount,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium,
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      formatTime(elapsedSeconds),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(fontSize: 46),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      currentBrewAmount,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 18),
                       Text(

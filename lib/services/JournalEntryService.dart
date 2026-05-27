@@ -58,6 +58,16 @@ class JournalService {
     throw Exception('AI feedback failed: ${res.statusCode} ${res.body}');
   }
 
+  Future<Map<String, dynamic>?> getAiProfile() async {
+    final res = await api.get('/journalEntries/ai-profile');
+    if (res.statusCode == 200) {
+      final decoded = jsonDecode(res.body);
+      if (decoded == null) return null;
+      return decoded as Map<String, dynamic>;
+    }
+    throw Exception('AI profile failed: ${res.statusCode} ${res.body}');
+  }
+
   Future<void> delete(String id) async {
     final res = await api.delete('/journalEntries/$id');
     if (res.statusCode != 204) {

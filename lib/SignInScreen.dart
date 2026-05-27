@@ -23,16 +23,20 @@ class _SignInScreenState extends State<SignInScreen> {
       busy = true;
       error = null;
     });
+    var signedIn = false;
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailC.text.trim(),
         password: passC.text,
       );
+      signedIn = true;
     } on FirebaseAuthException catch (e) {
       setState(() => error = e.message);
     } finally {
       if (mounted) setState(() => busy = false);
     }
+
+    if (!signedIn || !mounted) return;
 
     final journal = context.read<Journal>();
     final beans = context.read<BeansList>();

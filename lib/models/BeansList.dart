@@ -13,7 +13,12 @@ class BeansList extends ChangeNotifier {
 
   Future<void> init() async {
     if (FirebaseAuth.instance.currentUser == null) {
-      _entries = await loadEntries();
+      try {
+        _entries = await loadEntries();
+      } catch (e) {
+        debugPrint('Beans local load failed: $e');
+        _entries = [];
+      }
     } else {
       final api = ApiClient(apiBaseUrl); // replace in prod
       final journalSvc = BeansService(api);
@@ -26,14 +31,22 @@ class BeansList extends ChangeNotifier {
 
   Future<void> addEntry(Beans beans) async {
     _entries.add(beans);
-    await saveEntries(_entries); // or saveEntriesToPrefs
     notifyListeners();
+    try {
+      await saveEntries(_entries); // or saveEntriesToPrefs
+    } catch (e) {
+      debugPrint('Beans local persistence failed: $e');
+    }
   }
 
   Future<void> removeEntry(String id) async {
     _entries.removeWhere((element) => element.id == id);
-    await saveEntries(_entries);
     notifyListeners();
+    try {
+      await saveEntries(_entries);
+    } catch (e) {
+      debugPrint('Beans local persistence failed: $e');
+    }
   }
 
   Future<void> editEntry(String id, int newWeight) async {

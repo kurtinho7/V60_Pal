@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:provider/provider.dart';
 import 'package:v60pal/ApiClient.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Beans.dart';
+import 'package:v60pal/models/Journal.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/services/JournalEntryService.dart';
@@ -20,12 +22,27 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
   late final JournalService _journalSvc;
   bool _loadingFeedback = false;
   String? _feedbackError;
+  Map<String, dynamic>? _aiProfile;
 
   @override
   void initState() {
     super.initState();
     _entry = widget.journalEntry;
     _journalSvc = JournalService(ApiClient(apiBaseUrl));
+    _loadAiProfile();
+  }
+
+  Future<void> _loadAiProfile() async {
+    if (_entry.id.isEmpty) return;
+    try {
+      final profile = await _journalSvc.getAiProfile();
+      if (!mounted) return;
+      setState(() {
+        _aiProfile = profile;
+      });
+    } catch (e) {
+      debugPrint('AI profile load failed: $e');
+    }
   }
 
   Recipe? _recipeFor(JournalEntry entry) {
@@ -63,8 +80,18 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
         recipeContext: _recipeContext(),
       );
       if (!mounted) return;
+      final entryJson = updated['entry'] is Map
+          ? Map<String, dynamic>.from(updated['entry'] as Map)
+          : updated;
+      final updatedEntry = JournalEntry.fromApi(entryJson);
+      final profile = updated['aiProfile'] is Map
+          ? Map<String, dynamic>.from(updated['aiProfile'] as Map)
+          : null;
+      await context.read<Journal>().updateEntry(updatedEntry);
+      if (!mounted) return;
       setState(() {
-        _entry = JournalEntry.fromApi(updated);
+        _entry = updatedEntry;
+        _aiProfile = profile ?? _aiProfile;
       });
     } catch (e) {
       if (!mounted) return;
@@ -208,6 +235,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
                   feedback: entry.aiFeedback,
                   model: entry.aiFeedbackModel,
                   generatedAt: entry.aiFeedbackGeneratedAt,
+                  aiProfile: _aiProfile,
                   loading: _loadingFeedback,
                   error: _feedbackError,
                   onGenerate: _generateFeedback,
@@ -281,6 +309,7 @@ class _AiFeedbackCard extends StatelessWidget {
   final Map<String, dynamic>? feedback;
   final String? model;
   final DateTime? generatedAt;
+  final Map<String, dynamic>? aiProfile;
   final bool loading;
   final String? error;
   final VoidCallback onGenerate;
@@ -289,10 +318,19 @@ class _AiFeedbackCard extends StatelessWidget {
     required this.feedback,
     required this.model,
     required this.generatedAt,
+    required this.aiProfile,
     required this.loading,
     required this.error,
     required this.onGenerate,
   });
+
+  List<String> _stringList(String key) {
+    return (aiProfile?[key] as List?)
+            ?.whereType<String>()
+            .where((item) => item.trim().isNotEmpty)
+            .toList() ??
+        [];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -306,6 +344,17 @@ class _AiFeedbackCard extends StatelessWidget {
     final nextRecipe = feedback?['nextBrewRecipe'] is Map
         ? Map<String, dynamic>.from(feedback!['nextBrewRecipe'] as Map)
         : <String, dynamic>{};
+    final tastePreferences = _stringList('tastePreferences');
+    final successfulPatterns = _stringList('successfulPatterns');
+    final recurringIssues = _stringList('recurringIssues');
+    final beanPreferences = _stringList('beanPreferences');
+    final nextFocus = aiProfile?['nextFocus'] as String?;
+    final hasProfile =
+        tastePreferences.isNotEmpty ||
+        successfulPatterns.isNotEmpty ||
+        recurringIssues.isNotEmpty ||
+        beanPreferences.isNotEmpty ||
+        (nextFocus?.trim().isNotEmpty ?? false);
 
     return _SectionCard(
       child: Column(
@@ -363,6 +412,16 @@ class _AiFeedbackCard extends StatelessWidget {
                 value: '${nextRecipe['waterAmount'] ?? '-'}',
               ),
             ],
+            if (hasProfile) ...[
+              const SizedBox(height: 14),
+              _AiProfileSummary(
+                tastePreferences: tastePreferences,
+                successfulPatterns: successfulPatterns,
+                recurringIssues: recurringIssues,
+                beanPreferences: beanPreferences,
+                nextFocus: nextFocus ?? '',
+              ),
+            ],
             const SizedBox(height: 10),
             Text(
               'Confidence: ${feedback!['confidence'] ?? '-'}',
@@ -384,11 +443,22 @@ class _AiFeedbackCard extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 14),
-          ] else
+          ] else ...[
             Text(
               'Get personalized ideas for your next brew based on this log.',
               style: TextStyle(color: TEXT_COLOR.withValues(alpha: 0.82)),
             ),
+            if (hasProfile) ...[
+              const SizedBox(height: 14),
+              _AiProfileSummary(
+                tastePreferences: tastePreferences,
+                successfulPatterns: successfulPatterns,
+                recurringIssues: recurringIssues,
+                beanPreferences: beanPreferences,
+                nextFocus: nextFocus ?? '',
+              ),
+            ],
+          ],
           if (error != null) ...[
             const SizedBox(height: 10),
             Text(error!, style: const TextStyle(color: Colors.redAccent)),
@@ -410,6 +480,63 @@ class _AiFeedbackCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _AiProfileSummary extends StatelessWidget {
+  final List<String> tastePreferences;
+  final List<String> successfulPatterns;
+  final List<String> recurringIssues;
+  final List<String> beanPreferences;
+  final String nextFocus;
+
+  const _AiProfileSummary({
+    required this.tastePreferences,
+    required this.successfulPatterns,
+    required this.recurringIssues,
+    required this.beanPreferences,
+    required this.nextFocus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: BUTTON_COLOR.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: OUTLINE_COLOR),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "What I've learned",
+            style: TextStyle(color: TEXT_COLOR, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          _ProfileLine(label: 'Taste', values: tastePreferences),
+          _ProfileLine(label: 'Works well', values: successfulPatterns),
+          _ProfileLine(label: 'Watch', values: recurringIssues),
+          _ProfileLine(label: 'Beans', values: beanPreferences),
+          if (nextFocus.trim().isNotEmpty)
+            _DetailRow(label: 'Next focus', value: nextFocus),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileLine extends StatelessWidget {
+  final String label;
+  final List<String> values;
+
+  const _ProfileLine({required this.label, required this.values});
+
+  @override
+  Widget build(BuildContext context) {
+    if (values.isEmpty) return const SizedBox.shrink();
+    return _DetailRow(label: label, value: values.join(', '));
   }
 }
 

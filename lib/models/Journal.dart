@@ -12,7 +12,12 @@ class Journal extends ChangeNotifier {
 
   Future<void> init() async {
     if (FirebaseAuth.instance.currentUser == null) {
-      _entries = await loadEntries();
+      try {
+        _entries = await loadEntries();
+      } catch (e) {
+        debugPrint('Journal local load failed: $e');
+        _entries = [];
+      }
     } else {
       final api = ApiClient(apiBaseUrl); // replace in prod
       final journalSvc = JournalService(api);
@@ -25,14 +30,42 @@ class Journal extends ChangeNotifier {
 
   Future<void> addEntry(JournalEntry entry) async {
     _entries.add(entry);
-    await saveEntries(_entries); // or saveEntriesToPrefs
     notifyListeners();
+    try {
+      await saveEntries(_entries); // or saveEntriesToPrefs
+    } catch (e) {
+      debugPrint('Journal local persistence failed: $e');
+    }
   }
 
   Future<void> removeEntry(int i) async {
     _entries.removeAt(i);
-    await saveEntries(_entries);
     notifyListeners();
+    try {
+      await saveEntries(_entries);
+    } catch (e) {
+      debugPrint('Journal local persistence failed: $e');
+    }
+  }
+
+  Future<void> updateEntry(JournalEntry entry) async {
+    final index = _entries.indexWhere((existing) {
+      if (entry.id.isNotEmpty && existing.id == entry.id) return true;
+      return existing.date == entry.date;
+    });
+
+    if (index == -1) {
+      _entries.add(entry);
+    } else {
+      _entries[index] = entry;
+    }
+
+    notifyListeners();
+    try {
+      await saveEntries(_entries);
+    } catch (e) {
+      debugPrint('Journal local persistence failed: $e');
+    }
   }
 
   // You can also add update/remove methods similarly...
