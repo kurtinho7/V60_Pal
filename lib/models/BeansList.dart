@@ -15,7 +15,7 @@ class BeansList extends ChangeNotifier {
     if (FirebaseAuth.instance.currentUser == null) {
       _entries = await loadEntries();
     } else {
-      final api = ApiClient('http://10.0.2.2:3000'); // replace in prod
+      final api = ApiClient(apiBaseUrl); // replace in prod
       final journalSvc = BeansService(api);
       final list = await journalSvc.list(); // returns List<Map<String,dynamic>>
       final mapped = list.map((m) => Beans.fromApi(m)).toList();

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 
+const apiBaseUrl = 'https://v60-pal.onrender.com';
+
 class ApiClient {
   ApiClient(this.baseUrl);
   final String baseUrl;

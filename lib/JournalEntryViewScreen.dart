@@ -25,7 +25,7 @@ class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
   void initState() {
     super.initState();
     _entry = widget.journalEntry;
-    _journalSvc = JournalService(ApiClient('http://10.0.2.2:3000'));
+    _journalSvc = JournalService(ApiClient(apiBaseUrl));
   }
 
   Recipe? _recipeFor(JournalEntry entry) {

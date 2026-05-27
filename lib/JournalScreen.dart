@@ -28,7 +28,7 @@ class _JournalScreenState extends State<JournalScreen> {
   @override
   void initState() {
     super.initState();
-    api = ApiClient('http://10.0.2.2:3000'); // replace in prod
+    api = ApiClient(apiBaseUrl); // replace in prod
     beansSvc = BeansService(api);
     journalSvc = JournalService(api);
     _load();

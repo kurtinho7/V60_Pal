@@ -40,7 +40,7 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
   @override
   void initState() {
     super.initState();
-    api = ApiClient('http://10.0.2.2:3000');
+    api = ApiClient(apiBaseUrl);
     journalSvc = JournalService(api);
     beansSvc = BeansService(api);
   }

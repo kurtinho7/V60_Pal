@@ -42,7 +42,7 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
   void initState() {
     super.initState();
     currentRating = 0;
-    api = ApiClient('http://10.0.2.2:3000');
+    api = ApiClient(apiBaseUrl);
     journalSvc = JournalService(api);
     beansSvc = BeansService(api);
   }

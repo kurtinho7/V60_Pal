@@ -29,7 +29,7 @@ class _BeansScreenState extends State<BeansScreen> {
   @override
   void initState() {
     super.initState();
-    api = ApiClient('http://10.0.2.2:3000');
+    api = ApiClient(apiBaseUrl);
     beansSvc = BeansService(api);
   }
 
