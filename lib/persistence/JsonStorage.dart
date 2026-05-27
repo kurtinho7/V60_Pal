@@ -26,10 +26,7 @@ class JsonStorage<T> {
       if (!await file.exists()) return [];
       final contents = await file.readAsString();
       final List<dynamic> jsonList = jsonDecode(contents);
-      return jsonList
-          .cast<Map<String, dynamic>>()
-          .map(fromJson)
-          .toList();
+      return jsonList.cast<Map<String, dynamic>>().map(fromJson).toList();
     } catch (_) {
       return [];
     }

@@ -17,7 +17,6 @@ const journalRoutes = require('./routes/journalEntry');
 
 // 1) Connect to Atlas
 const uri = process.env.MONGO_URI;
-console.log(uri);
 mongoose.connect(uri)
   .then(() => console.log('🗄️ MongoDB connected'))
   .catch(err => console.error(err));

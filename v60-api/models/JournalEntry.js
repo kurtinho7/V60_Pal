@@ -5,10 +5,15 @@ const journalEntrySchema = new mongoose.Schema({
   rating:        { type: String, required: false },
   waterTemp:     { type: Number, required: false },
   timeTaken:     { type: Number, required: false },
+  coffeeDose:    { type: String, required: false },
+  waterWeightGrams: { type: Number, required: false },
   grindSetting:  { type: String, required: false },
   notes:         { type: String, default: '', required: false },
   beans:         { type: mongoose.Schema.Types.ObjectId, ref: 'Beans', required: false },
   recipe:        { type: String, required: false },
+  aiFeedback:    { type: mongoose.Schema.Types.Mixed, required: false },
+  aiFeedbackGeneratedAt: { type: Date, required: false },
+  aiFeedbackModel: { type: String, required: false },
   date:          { type: Date, required: false, default: Date.now},
   owner: { type: String, required: true, index: true } 
 }, {

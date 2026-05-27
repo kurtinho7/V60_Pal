@@ -16,14 +16,13 @@ class Beans {
     required this.roastDate,
     this.weight,
     this.notes,
-
   });
 
   factory Beans.fromJson(Map<String, dynamic> json) {
     return Beans(
-      id:         json['id'] as String,
-      name:       json['name'] as String,
-      origin:     json['origin'] as String,
+      id: json['id'] as String,
+      name: json['name'] as String,
+      origin: json['origin'] as String,
       roastLevel: json['roastLevel'] as String,
       roastDate: DateTime.parse(json['roastDate'] as String),
       weight: (json['weight'] as num).toInt(),
@@ -32,14 +31,14 @@ class Beans {
   }
 
   Map<String, dynamic> toJson() => {
-        'id':         id,
-        'name':       name,
-        'origin':     origin,
-        'roastLevel': roastLevel,
-        'roastDate' : roastDate.toIso8601String(),
-        'weight' : weight,
-        'notes' : notes,
-      };
+    'id': id,
+    'name': name,
+    'origin': origin,
+    'roastLevel': roastLevel,
+    'roastDate': roastDate.toIso8601String(),
+    'weight': weight,
+    'notes': notes,
+  };
 
   factory Beans.fromApi(Map<String, dynamic> j) {
     // id can be '_id' (Mongo) or 'id' (legacy)
@@ -65,10 +64,6 @@ class Beans {
 
     // recipe: same idea
 
-    // date usually ISO string
-    final dateStr = j['date'] as String?; 
-    final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
-
     return Beans(
       id: id,
       name: (j['name'] as String),
@@ -81,7 +76,14 @@ class Beans {
   }
 
   Beans copyWith(int newWeight) {
-    return Beans(id: id, name: name, origin: origin, roastLevel: roastLevel, roastDate: roastDate, weight: newWeight, notes: notes );
+    return Beans(
+      id: id,
+      name: name,
+      origin: origin,
+      roastLevel: roastLevel,
+      roastDate: roastDate,
+      weight: newWeight,
+      notes: notes,
+    );
   }
-
 }

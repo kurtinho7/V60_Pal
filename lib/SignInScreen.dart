@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/BeansList.dart';
 import 'package:v60pal/models/Journal.dart';
+import 'package:v60pal/widgets/app_ui.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -42,50 +43,57 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final journal = context.read<Journal>();
-    final beans = context.read<BeansList>();
     return Scaffold(
+      backgroundColor: BACKGROUND_COLOR,
       appBar: AppBar(title: const Text('Sign in')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: emailC,
-              decoration: const InputDecoration(labelText: 'Email'),
-              style: TextStyle(color: TEXT_COLOR),
-            ),
-            TextField(
-              controller: passC,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-              style: TextStyle(color: TEXT_COLOR),
-            ),
-            const SizedBox(height: 12),
-            if (error != null)
-              Text(error!, style: const TextStyle(color: Colors.red)),
-            ElevatedButton(
-              onPressed: busy ? null : _signIn,
-              child: const Text('Sign in'),
-            ),
-            TextButton(
-              onPressed: () async {
-                try {
-                  await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                    email: emailC.text.trim(),
-                    password: passC.text,
-                  );
-                } on FirebaseAuthException catch (e) {
-                  debugPrint(
-                    'FirebaseAuthException code=${e.code} message=${e.message}',
-                  );
-                } catch (e, st) {
-                  debugPrint('Unknown sign-up error: $e\n$st');
-                }
-              },
-              child: const Text('Create account'),
-            ),
-          ],
+        child: AppSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AppPageTitle(
+                title: 'Welcome back',
+                subtitle: 'Sign in to sync your beans and journal.',
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: emailC,
+                decoration: const InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passC,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              if (error != null)
+                Text(error!, style: TextStyle(color: COLOR_SCHEME.error)),
+              FilledButton(
+                onPressed: busy ? null : _signIn,
+                child: Text(busy ? 'Signing in...' : 'Sign in'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                      email: emailC.text.trim(),
+                      password: passC.text,
+                    );
+                  } on FirebaseAuthException catch (e) {
+                    debugPrint(
+                      'FirebaseAuthException code=${e.code} message=${e.message}',
+                    );
+                  } catch (e, st) {
+                    debugPrint('Unknown sign-up error: $e\n$st');
+                  }
+                },
+                child: const Text('Create account'),
+              ),
+            ],
+          ),
         ),
       ),
     );

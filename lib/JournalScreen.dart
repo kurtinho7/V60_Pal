@@ -1,12 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:v60pal/JournalEntryViewScreen.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Journal.dart';
 import 'package:v60pal/services/BeansService.dart';
 import 'package:v60pal/services/JournalEntryService.dart';
+import 'package:v60pal/widgets/app_ui.dart';
 
 import 'ApiClient.dart';
 import 'package:provider/provider.dart';
@@ -95,10 +94,11 @@ class _JournalScreenState extends State<JournalScreen> {
     final entries = List<JournalEntry>.from(journal.entries); // newest first
 
     return Scaffold(
+      backgroundColor: BACKGROUND_COLOR,
       body: RefreshIndicator(
         onRefresh: _load,
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(16.0),
           child: Builder(
             builder: (_) {
               if (loading) {
@@ -134,8 +134,8 @@ class _JournalScreenState extends State<JournalScreen> {
                     background: const SizedBox.shrink(),
                     secondaryBackground: Container(
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(16),
+                        color: Theme.of(context).colorScheme.error,
+                        borderRadius: BorderRadius.circular(APP_RADIUS),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       alignment: Alignment.centerRight,
@@ -152,16 +152,13 @@ class _JournalScreenState extends State<JournalScreen> {
                       ),
                     ),
                     confirmDismiss: (dir) async {
-                      final ok = await showDialog<bool>(
+                      final ok =
+                          await showDialog<bool>(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: Text(
-                                'Delete this entry?',
-                                style: TextStyle(color: TEXT_COLOR),
-                              ),
+                              title: Text('Delete this entry?'),
                               content: Text(
                                 'This cannot be undone (unless you tap UNDO).',
-                                style: TextStyle(color: TEXT_COLOR),
                               ),
                               actions: [
                                 TextButton(
@@ -177,13 +174,11 @@ class _JournalScreenState extends State<JournalScreen> {
                           ) ??
                           false;
 
-                          if (!ok) return false;
+                      if (!ok) return false;
 
-                          _deleteAt(context, entries.length - 1 - i);
+                      _deleteAt(context, entries.length - 1 - i);
 
-                          return true;
-                          
-                          
+                      return true;
                     },
                     onDismissed: (_) {},
                     child: _JournalCard(
@@ -248,21 +243,21 @@ class _JournalCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(APP_RADIUS),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white10,
-          border: Border.all(color: Colors.white24),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
+          color: SURFACE_COLOR,
+          border: Border.all(color: OUTLINE_COLOR),
+          borderRadius: BorderRadius.circular(APP_RADIUS),
+          boxShadow: [
             BoxShadow(
-              blurRadius: 6,
-              offset: Offset(0, 3),
-              color: Colors.black26,
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: 0.04),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -282,12 +277,12 @@ class _JournalCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: TEXT_COLOR,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
-                      const Icon(Icons.chevron_right),
+                      Icon(Icons.chevron_right, color: MUTED_TEXT_COLOR),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -337,7 +332,7 @@ class _JournalCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: TEXT_COLOR.withOpacity(0.85),
+                        color: TEXT_COLOR.withValues(alpha: 0.85),
                         fontSize: 13,
                       ),
                     ),
@@ -364,26 +359,26 @@ class _DateBadge extends StatelessWidget {
       height: 56,
       decoration: BoxDecoration(
         color: BUTTON_COLOR,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
+        borderRadius: BorderRadius.circular(APP_RADIUS),
+        border: Border.all(color: OUTLINE_COLOR),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             month,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: PRIMARY_COLOR,
             ),
           ),
           Text(
             day,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: TEXT_COLOR,
             ),
           ),
         ],
@@ -402,18 +397,22 @@ class _SpecChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white12,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
+        color: SURFACE_TINT_COLOR,
+        borderRadius: BorderRadius.circular(APP_RADIUS),
+        border: Border.all(color: OUTLINE_COLOR),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14),
+          Icon(icon, size: 14, color: PRIMARY_COLOR),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.white),
+            style: TextStyle(
+              fontSize: 12,
+              color: TEXT_COLOR,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -427,23 +426,10 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 40),
-        child: Column(
-          children: [
-            const Icon(Icons.coffee_outlined, size: 56),
-            const SizedBox(height: 12),
-            Text(
-              'No journal entries yet',
-              style: TextStyle(color: TEXT_COLOR, fontSize: 16),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Add one from the brew screen after your next cup ☕',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
+      child: AppEmptyState(
+        icon: Icons.coffee_outlined,
+        title: 'No journal entries yet',
+        message: 'Add one from the brew screen after your next cup.',
       ),
     );
   }
@@ -466,13 +452,13 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Something went wrong',
-              style: TextStyle(color: TEXT_COLOR, fontSize: 16),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: MUTED_TEXT_COLOR),
             ),
             const SizedBox(height: 12),
             FilledButton(onPressed: onRetry, child: const Text('Retry')),
@@ -493,9 +479,9 @@ class _JournalSkeletonList extends StatelessWidget {
       itemBuilder: (_, __) => Container(
         height: 96,
         decoration: BoxDecoration(
-          color: Colors.white10,
-          border: Border.all(color: Colors.white12),
-          borderRadius: BorderRadius.circular(16),
+          color: SURFACE_COLOR,
+          border: Border.all(color: OUTLINE_COLOR),
+          borderRadius: BorderRadius.circular(APP_RADIUS),
         ),
       ),
       separatorBuilder: (_, __) => const SizedBox(height: 10),

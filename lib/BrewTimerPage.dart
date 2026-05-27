@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/TimerScreen.dart';
 import 'package:v60pal/models/Recipe.dart';
+import 'package:v60pal/widgets/app_ui.dart';
 
 class BrewTimerPage extends StatefulWidget {
   final Recipe recipe;
@@ -24,141 +25,153 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
 
   @override
   Widget build(BuildContext context) {
-    String name = widget.recipe.name;
-    double water = widget.recipe.waterWeightGrams;
-    String dose = widget.recipe.coffeeDose;
-    List<int> pourSteps = widget.recipe.pourSteps;
-    String brewTime = widget.recipe.brewTime;
-    String grindSize = widget.recipe.grindSize;
+    final recipe = widget.recipe;
     return Scaffold(
-      appBar: AppBar(title: Text(name), centerTitle: true),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                border: Border.all(color: Colors.black45),
-                borderRadius: BorderRadius.circular(4.0),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                    color: Colors.black12,
-                  ),
-                ],
+      backgroundColor: BACKGROUND_COLOR,
+      appBar: AppBar(title: Text(recipe.name)),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppSectionCard(
+                color: BUTTON_COLOR.withValues(alpha: 0.65),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.name,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Review the recipe, then start the guided pour timer.',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: MUTED_TEXT_COLOR),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // left‑align
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
                 children: [
-                  Text(
-                    'WATER',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
+                  _RecipeFact(
+                    icon: Icons.water_drop_outlined,
+                    label: 'Water',
+                    value: '${recipe.waterWeightGrams.toStringAsFixed(0)}g',
                   ),
-                  SizedBox(height: 4), // space between title & body
-                  Text('$water', style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
-                ],
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                border: Border.all(color: Colors.black45),
-                borderRadius: BorderRadius.circular(4.0),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                    color: Colors.black12,
+                  _RecipeFact(
+                    icon: Icons.scale_outlined,
+                    label: 'Dose',
+                    value: recipe.coffeeDose,
+                  ),
+                  _RecipeFact(
+                    icon: Icons.grain_outlined,
+                    label: 'Grind',
+                    value: recipe.grindSize,
+                  ),
+                  _RecipeFact(
+                    icon: Icons.timer_outlined,
+                    label: 'Time',
+                    value: recipe.brewTime,
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // left‑align
-                children: [
-                  Text(
-                    'DOSE',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
-                  ),
-                  SizedBox(height: 4), // space between title & body
-                  Text(dose, style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
-                ],
+              const SizedBox(height: 16),
+              AppSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pour schedule',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    ...List.generate(recipe.pourSteps.length, (index) {
+                      final time = recipe.pourSteps[index];
+                      final amount = recipe.pourAmounts[index];
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index == recipe.pourSteps.length - 1 ? 0 : 10,
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: BUTTON_COLOR,
+                              foregroundColor: PRIMARY_COLOR,
+                              child: Text('${index + 1}'),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text('Pour to ${amount}g')),
+                            Text(
+                              _formatTime(time),
+                              style: TextStyle(
+                                color: MUTED_TEXT_COLOR,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                border: Border.all(color: Colors.black45),
-                borderRadius: BorderRadius.circular(4.0),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                    color: Colors.black12,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // left‑align
-                children: [
-                  Text(
-                    'GRIND SIZE',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
-                  ),
-                  SizedBox(height: 4), // space between title & body
-                  Text(grindSize, style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
-                ],
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                border: Border.all(color: Colors.black45),
-                borderRadius: BorderRadius.circular(4.0),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                    color: Colors.black12,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // left‑align
-                children: [
-                  Text(
-                    'BREW TIME',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TEXT_COLOR),
-                  ),
-                  SizedBox(height: 4), // space between title & body
-                  Text(brewTime, style: TextStyle(fontSize: 16, color: TEXT_COLOR)),
-                ],
-              ),
-            ),
-            SizedBox(height: 40,),
-            SizedBox(
-              width: double.infinity,
-              height: 300.0,
-              child: RawMaterialButton(
+              const SizedBox(height: 20),
+              FilledButton.icon(
                 onPressed: _onStartPress,
-                elevation: 2.0,
-                fillColor: Colors.white10,
-                constraints: BoxConstraints(minWidth: 300.0, minHeight: 300.0),
-                padding: EdgeInsets.all(15.0),
-                shape: CircleBorder(),
-                child: Text("START", style: TextStyle(fontSize: 70, color: TEXT_COLOR),),
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text('Start timer'),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(int totalSec) {
+    final minutes = (totalSec ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSec % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+}
+
+class _RecipeFact extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _RecipeFact({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 160,
+      child: AppSectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: PRIMARY_COLOR),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(color: MUTED_TEXT_COLOR),
             ),
+            const SizedBox(height: 4),
+            Text(value, style: Theme.of(context).textTheme.titleMedium),
           ],
         ),
       ),

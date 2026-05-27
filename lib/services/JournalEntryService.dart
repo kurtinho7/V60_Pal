@@ -17,6 +17,8 @@ class JournalService {
     required double rating,
     int? waterTemp,
     int? timeTaken,
+    String? coffeeDose,
+    double? waterWeightGrams,
     String? grindSetting,
     String? notes,
     String? beansId, // Mongo _id for a Beans doc you own
@@ -27,6 +29,8 @@ class JournalService {
       'rating': rating,
       if (waterTemp != null) 'waterTemp': waterTemp,
       if (timeTaken != null) 'timeTaken': timeTaken,
+      if (coffeeDose != null) 'coffeeDose': coffeeDose,
+      if (waterWeightGrams != null) 'waterWeightGrams': waterWeightGrams,
       if (grindSetting != null) 'grindSetting': grindSetting,
       if (notes != null) 'notes': notes,
       if (beansId != null) 'beans': beansId,
@@ -39,6 +43,19 @@ class JournalService {
       return jsonDecode(res.body) as Map<String, dynamic>; // populated
     }
     throw Exception('Create journal failed: ${res.statusCode} ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> generateAiFeedback(
+    String entryId, {
+    Map<String, dynamic>? recipeContext,
+  }) async {
+    final res = await api.post('/journalEntries/$entryId/ai-feedback', {
+      if (recipeContext != null) 'recipeContext': recipeContext,
+    });
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body) as Map<String, dynamic>;
+    }
+    throw Exception('AI feedback failed: ${res.statusCode} ${res.body}');
   }
 
   Future<void> delete(String id) async {

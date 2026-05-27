@@ -2,7 +2,7 @@ import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'dart:convert';
 
-class JournalEntry{
+class JournalEntry {
   /// Mongo _id
   final String id;
 
@@ -12,8 +12,13 @@ class JournalEntry{
   /// Optional fields (server may omit them)
   final int? waterTemp;
   final int? timeTaken;
+  final String? coffeeDose;
+  final double? waterWeightGrams;
   final String? grindSetting;
   final String? notes;
+  final Map<String, dynamic>? aiFeedback;
+  final DateTime? aiFeedbackGeneratedAt;
+  final String? aiFeedbackModel;
 
   /// If the API populates refs, these may be full objects.
   final Beans? beans;
@@ -30,8 +35,13 @@ class JournalEntry{
     required this.rating,
     this.waterTemp,
     this.timeTaken,
+    this.coffeeDose,
+    this.waterWeightGrams,
     this.grindSetting,
     this.notes,
+    this.aiFeedback,
+    this.aiFeedbackGeneratedAt,
+    this.aiFeedbackModel,
     this.beans,
     this.recipe,
     this.beansId,
@@ -44,12 +54,25 @@ class JournalEntry{
     // id can be '_id' (Mongo) or 'id' (legacy)
     final id = (j['_id'] ?? j['id']) as String;
 
-    // rating might be int/double/string — normalize to int
-    int parseRating(dynamic v) {
+    // rating might be int/double/string — normalize to double
+    double parseRating(dynamic v) {
       if (v == null) return 0;
-      if (v is num) return v.toInt();
-      if (v is String) return int.tryParse(v) ?? 0;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? 0;
       return 0;
+    }
+
+    double? parseDouble(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v);
+      return null;
+    }
+
+    Map<String, dynamic>? parseMap(dynamic v) {
+      if (v is Map<String, dynamic>) return v;
+      if (v is Map) return Map<String, dynamic>.from(v);
+      return null;
     }
 
     // beans: could be ObjectId string or populated object
@@ -59,7 +82,7 @@ class JournalEntry{
     if (beansField is String) {
       beansId = beansField;
     } else if (beansField is Map<String, dynamic>) {
-      beansObj = Beans.fromJson(beansField);
+      beansObj = Beans.fromApi(beansField);
       beansId = (beansField['_id'] ?? beansField['id']) as String?;
     }
 
@@ -75,16 +98,24 @@ class JournalEntry{
     }
 
     // date usually ISO string
-    final dateStr = j['date'] as String?; 
+    final dateStr = j['date'] as String?;
     final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
+    final feedbackDateStr = j['aiFeedbackGeneratedAt'] as String?;
 
     return JournalEntry(
       id: id,
-      rating: double.parse(j['rating'] as String),
+      rating: parseRating(j['rating']),
       waterTemp: (j['waterTemp'] as num?)?.toInt(),
       timeTaken: (j['timeTaken'] as num?)?.toInt(),
+      coffeeDose: j['coffeeDose'] as String?,
+      waterWeightGrams: parseDouble(j['waterWeightGrams']),
       grindSetting: j['grindSetting'] as String?,
       notes: j['notes'] as String?,
+      aiFeedback: parseMap(j['aiFeedback']),
+      aiFeedbackGeneratedAt: feedbackDateStr != null
+          ? DateTime.tryParse(feedbackDateStr)
+          : null,
+      aiFeedbackModel: j['aiFeedbackModel'] as String?,
       beans: beansObj,
       recipe: recipeObj,
       beansId: beansId,
@@ -95,54 +126,128 @@ class JournalEntry{
 
   /// Body for CREATE requests to your API
   Map<String, dynamic> toCreateBody() => {
-        'rating': rating,
-        if (waterTemp != null) 'waterTemp': waterTemp,
-        if (timeTaken != null) 'timeTaken': timeTaken,
-        if (grindSetting != null) 'grindSetting': grindSetting,
-        if (notes != null) 'notes': notes,
-        if (beansId != null) 'beans': beansId,     // send only the id
-        if (recipeId != null) 'recipe': recipeId,  // send only the id
-        'date': date.toIso8601String(),
-      };
+    'rating': rating,
+    if (waterTemp != null) 'waterTemp': waterTemp,
+    if (timeTaken != null) 'timeTaken': timeTaken,
+    if (coffeeDose != null) 'coffeeDose': coffeeDose,
+    if (waterWeightGrams != null) 'waterWeightGrams': waterWeightGrams,
+    if (grindSetting != null) 'grindSetting': grindSetting,
+    if (notes != null) 'notes': notes,
+    if (beansId != null) 'beans': beansId, // send only the id
+    if (recipeId != null) 'recipe': recipeId, // send only the id
+    'date': date.toIso8601String(),
+  };
 
   /// Body for UPDATE requests to your API
   Map<String, dynamic> toUpdateBody() => {
-        'rating': rating,
-        'waterTemp': waterTemp,
-        'timeTaken': timeTaken,
-        'grindSetting': grindSetting,
-        'notes': notes,
-        'beans': beansId,
-        'recipe': recipeId,
-        'date': date.toIso8601String(),
-      }..removeWhere((_, v) => v == null);
+    'rating': rating,
+    'waterTemp': waterTemp,
+    'timeTaken': timeTaken,
+    'coffeeDose': coffeeDose,
+    'waterWeightGrams': waterWeightGrams,
+    'grindSetting': grindSetting,
+    'notes': notes,
+    'aiFeedback': aiFeedback,
+    'aiFeedbackGeneratedAt': aiFeedbackGeneratedAt?.toIso8601String(),
+    'aiFeedbackModel': aiFeedbackModel,
+    'beans': beansId,
+    'recipe': recipeId,
+    'date': date.toIso8601String(),
+  }..removeWhere((_, v) => v == null);
 
-  factory JournalEntry.fromJson(Map<String, dynamic> j) => JournalEntry(
-    id: j['id'],
-    rating: j['rating'],
-    waterTemp: (j['waterTemp'] as num).toInt(),
-    timeTaken: (j['timeTaken'] as num).toInt(),
-    grindSetting: j['grindSetting'],
-    notes: j['notes'],
-    beans: Beans.fromJson(j['beans']as Map<String,dynamic>),
-    recipe: Recipe.fromJson(j['recipe']as Map<String,dynamic>),
-    date: DateTime.parse(j['date'] as String), 
-  );
+  factory JournalEntry.fromJson(Map<String, dynamic> j) {
+    double? parseDouble(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v);
+      return null;
+    }
+
+    Map<String, dynamic>? parseMap(dynamic v) {
+      if (v is Map<String, dynamic>) return v;
+      if (v is Map) return Map<String, dynamic>.from(v);
+      return null;
+    }
+
+    return JournalEntry(
+      id: j['id'] as String? ?? '',
+      rating: parseDouble(j['rating']),
+      waterTemp: (j['waterTemp'] as num?)?.toInt(),
+      timeTaken: (j['timeTaken'] as num?)?.toInt(),
+      coffeeDose: j['coffeeDose'] as String?,
+      waterWeightGrams: parseDouble(j['waterWeightGrams']),
+      grindSetting: j['grindSetting'] as String?,
+      notes: j['notes'] as String?,
+      aiFeedback: parseMap(j['aiFeedback']),
+      aiFeedbackGeneratedAt: j['aiFeedbackGeneratedAt'] is String
+          ? DateTime.tryParse(j['aiFeedbackGeneratedAt'] as String)
+          : null,
+      aiFeedbackModel: j['aiFeedbackModel'] as String?,
+      beans: j['beans'] is Map<String, dynamic>
+          ? Beans.fromJson(j['beans'] as Map<String, dynamic>)
+          : null,
+      recipe: j['recipe'] is Map<String, dynamic>
+          ? Recipe.fromJson(j['recipe'] as Map<String, dynamic>)
+          : null,
+      date: DateTime.tryParse(j['date'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
-    'id':     id,
-    'rating':      rating,
-    'waterTemp':   waterTemp,
-    'timeTaken':   timeTaken,
+    'id': id,
+    'rating': rating,
+    'waterTemp': waterTemp,
+    'timeTaken': timeTaken,
+    'coffeeDose': coffeeDose,
+    'waterWeightGrams': waterWeightGrams,
     'grindSetting': grindSetting,
-    'notes':       notes,
-    'beans':       beans,   // send only the ID if your API expects ref
-    'recipe':      recipe,  // same here
+    'notes': notes,
+    'aiFeedback': aiFeedback,
+    'aiFeedbackGeneratedAt': aiFeedbackGeneratedAt?.toIso8601String(),
+    'aiFeedbackModel': aiFeedbackModel,
+    'beans': beans?.toJson(),
+    'recipe': recipe?.toJson(),
     'date': date.toIso8601String(),
   };
 
   String toJsonString() => jsonEncode(toJson());
 
-
+  JournalEntry copyWith({
+    String? id,
+    double? rating,
+    int? waterTemp,
+    int? timeTaken,
+    String? coffeeDose,
+    double? waterWeightGrams,
+    String? grindSetting,
+    String? notes,
+    Map<String, dynamic>? aiFeedback,
+    DateTime? aiFeedbackGeneratedAt,
+    String? aiFeedbackModel,
+    Beans? beans,
+    Recipe? recipe,
+    String? beansId,
+    String? recipeId,
+    DateTime? date,
+  }) {
+    return JournalEntry(
+      id: id ?? this.id,
+      rating: rating ?? this.rating,
+      waterTemp: waterTemp ?? this.waterTemp,
+      timeTaken: timeTaken ?? this.timeTaken,
+      coffeeDose: coffeeDose ?? this.coffeeDose,
+      waterWeightGrams: waterWeightGrams ?? this.waterWeightGrams,
+      grindSetting: grindSetting ?? this.grindSetting,
+      notes: notes ?? this.notes,
+      aiFeedback: aiFeedback ?? this.aiFeedback,
+      aiFeedbackGeneratedAt:
+          aiFeedbackGeneratedAt ?? this.aiFeedbackGeneratedAt,
+      aiFeedbackModel: aiFeedbackModel ?? this.aiFeedbackModel,
+      beans: beans ?? this.beans,
+      recipe: recipe ?? this.recipe,
+      beansId: beansId ?? this.beansId,
+      recipeId: recipeId ?? this.recipeId,
+      date: date ?? this.date,
+    );
+  }
 }
-

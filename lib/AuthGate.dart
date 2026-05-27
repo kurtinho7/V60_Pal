@@ -1,7 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:v60pal/Theme.dart';
-import 'package:v60pal/main.dart';
 import 'SignInScreen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -30,8 +28,8 @@ class ChooseIfSignedIn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Sign Out?', style: TextStyle(color: TEXT_COLOR),),
-      content: Text(''),
+      title: const Text('Sign out?'),
+      content: const Text('You can sign back in any time.'),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),

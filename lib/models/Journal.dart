@@ -35,6 +35,5 @@ class Journal extends ChangeNotifier {
     notifyListeners();
   }
 
-
   // You can also add update/remove methods similarly...
 }

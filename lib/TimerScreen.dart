@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:v60pal/PostTimerScreen.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Recipe.dart';
-import 'dart:async';
-import 'package:v60pal/PostTimerScreen.dart';
+import 'package:v60pal/widgets/app_ui.dart';
 
 class TimerScreen extends StatefulWidget {
   final Recipe recipe;
@@ -31,11 +33,7 @@ class _TimerScreenState extends State<TimerScreen>
     stepController = AnimationController(vsync: this)
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          // when the circle fills, we've reached end of this step
-          advanceStep(
-            //brewAmounts[currentStepIndex],
-            //brewStepTimes[currentStepIndex],
-          );
+          advanceStep();
         }
       });
 
@@ -61,7 +59,7 @@ class _TimerScreenState extends State<TimerScreen>
     } else {
       stepController.forward();
     }
-    timer = Timer.periodic(Duration(seconds: 1), (_) {
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
         elapsedSeconds++;
       });
@@ -102,14 +100,12 @@ class _TimerScreenState extends State<TimerScreen>
         elapsedSeconds = 0;
         currentStepIndex = 0;
       });
-      //stepController.reset();
       startStepAnimation();
     } else {
       setState(() {
         elapsedSeconds = time;
         currentStepIndex--;
       });
-      //stepController.reset();
       startStepAnimation();
     }
   }
@@ -118,7 +114,6 @@ class _TimerScreenState extends State<TimerScreen>
     setState(() {
       elapsedSeconds = time;
     });
-    //stepController.reset();
     advanceStep();
   }
 
@@ -127,7 +122,6 @@ class _TimerScreenState extends State<TimerScreen>
       setState(() => currentStepIndex++);
       startStepAnimation();
     } else {
-      // all done
       timer?.cancel();
       setState(() {
         isRunning = false;
@@ -153,84 +147,109 @@ class _TimerScreenState extends State<TimerScreen>
 
     final isDone = currentStepIndex >= brewStepTimes.length - 1;
     final pourInfo = isDone
-        ? ''
-        : 'Next: $nextBrewAmount g @ ${formatTime(nextBrewTime)}';
+        ? 'Final pour'
+        : 'Next: ${nextBrewAmount}g at ${formatTime(nextBrewTime)}';
 
     final currentBrewAmount = currentStepIndex >= brewStepTimes.length
-        ? 'Enjoy!'
+        ? 'Enjoy'
         : 'Pour to ${brewAmounts[currentStepIndex]}g';
 
     return Scaffold(
-      appBar: AppBar(title: Text("V60 Brew Timer"), centerTitle: true),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Animated circle
-            SizedBox(
-              width: 300,
-              height: 300,
-              child: AnimatedBuilder(
-                animation: stepController,
-                builder: (context, _) => CircularProgressIndicator(
-                  value: stepController.value,
-                  strokeWidth: 20,
-                ),
-              ),
-            ),
-            SizedBox(height: 24),
-            // Elapsed timer
-            Text(
-              formatTime(elapsedSeconds),
-              style: TextStyle(fontSize: 48, color: TEXT_COLOR),
-            ),
-            SizedBox(height: 12),
-            Text(
-              currentBrewAmount,
-              style: TextStyle(fontSize: 18.0, color: TEXT_COLOR),
-            ),
-            SizedBox(height: 12),
-            // Next pour info
-            Text(
-              pourInfo,
-              style: TextStyle(fontSize: 18.0, color: Colors.white70),
-            ),
-            SizedBox(height: 24),
-            // Start/pause
-            ElevatedButton(
-              onPressed: isRunning ? pauseTimer : startTimer,
-              child: Text(isRunning ? "Pause" : "Start"),
-            ),
-            SizedBox(height: 60),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      backgroundColor: BACKGROUND_COLOR,
+      appBar: AppBar(title: const Text('V60 Brew Timer')),
+      body: SafeArea(
+        top: false,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    int time = 0;
-                    if (currentStepIndex <= 1) {
-                      time = 0;
-                    } else {
-                      time = brewStepTimes[currentStepIndex - 2];
-                    }
-                    backStep(time);
-                  },
-                  style: ButtonStyle(
-                    fixedSize: WidgetStateProperty.all(const Size(70, 80)),
+                AppSectionCard(
+                  color: BUTTON_COLOR.withValues(alpha: 0.55),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: 260,
+                        height: 260,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            AnimatedBuilder(
+                              animation: stepController,
+                              builder: (context, _) =>
+                                  CircularProgressIndicator(
+                                    value: stepController.value,
+                                    strokeWidth: 16,
+                                    backgroundColor: SURFACE_COLOR,
+                                    color: PRIMARY_COLOR,
+                                    strokeCap: StrokeCap.round,
+                                  ),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  formatTime(elapsedSeconds),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(fontSize: 46),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  currentBrewAmount,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        pourInfo,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: MUTED_TEXT_COLOR,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Icon(Icons.arrow_back),
                 ),
-                SizedBox(width: 50),
-                ElevatedButton(
-                  onPressed: () => skipStep(nextBrewTime),
-                  style: ButtonStyle(
-                    fixedSize: WidgetStateProperty.all(const Size(70, 80)),
-                  ),
-                  child: Icon(Icons.arrow_forward),
+                const SizedBox(height: 18),
+                FilledButton.icon(
+                  onPressed: isRunning ? pauseTimer : startTimer,
+                  icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
+                  label: Text(isRunning ? 'Pause' : 'Start'),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton.filledTonal(
+                      tooltip: 'Previous pour',
+                      onPressed: () {
+                        final time = currentStepIndex <= 1
+                            ? 0
+                            : brewStepTimes[currentStepIndex - 2];
+                        backStep(time);
+                      },
+                      icon: const Icon(Icons.arrow_back),
+                    ),
+                    const SizedBox(width: 18),
+                    IconButton.filledTonal(
+                      tooltip: 'Next pour',
+                      onPressed: () => skipStep(nextBrewTime),
+                      icon: const Icon(Icons.arrow_forward),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

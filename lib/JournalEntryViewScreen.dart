@@ -1,9 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:v60pal/ApiClient.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/JournalEntry.dart';
+import 'package:v60pal/models/Recipe.dart';
+import 'package:v60pal/services/JournalEntryService.dart';
 
 class JournalEntryViewScreen extends StatefulWidget {
   final JournalEntry journalEntry;
@@ -14,228 +16,434 @@ class JournalEntryViewScreen extends StatefulWidget {
 }
 
 class _JournalEntryViewScreenState extends State<JournalEntryViewScreen> {
+  late JournalEntry _entry;
+  late final JournalService _journalSvc;
+  bool _loadingFeedback = false;
+  String? _feedbackError;
+
+  @override
+  void initState() {
+    super.initState();
+    _entry = widget.journalEntry;
+    _journalSvc = JournalService(ApiClient('http://10.0.2.2:3000'));
+  }
+
+  Recipe? _recipeFor(JournalEntry entry) {
+    final recipeName = entry.recipeId ?? entry.recipe?.name;
+    if (recipeName == null || recipeName.isEmpty) return null;
+    for (final recipe in RECIPES) {
+      if (recipe.name == recipeName || recipe.id == recipeName) return recipe;
+    }
+    return entry.recipe;
+  }
+
+  Map<String, dynamic>? _recipeContext() {
+    final recipe = _recipeFor(_entry);
+    if (recipe == null) return null;
+    return recipe.toJson();
+  }
+
+  Future<void> _generateFeedback() async {
+    if (_entry.id.isEmpty) {
+      setState(() {
+        _feedbackError =
+            'Save this journal entry online before generating AI feedback.';
+      });
+      return;
+    }
+
+    setState(() {
+      _loadingFeedback = true;
+      _feedbackError = null;
+    });
+
+    try {
+      final updated = await _journalSvc.generateAiFeedback(
+        _entry.id,
+        recipeContext: _recipeContext(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _entry = JournalEntry.fromApi(updated);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _feedbackError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingFeedback = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final entry = widget.journalEntry;
-    final recipeId = entry.recipeId ?? 'Custom recipe';
+    final entry = _entry;
+    final recipe = _recipeFor(entry);
+    final recipeId = entry.recipeId?.isNotEmpty == true
+        ? entry.recipeId!
+        : 'Custom recipe';
     final rating = entry.rating ?? 0;
     final notes = entry.notes ?? '';
-    final dose = (entry.recipeId == "")? "0" : RECIPES.firstWhere((element) => element.name == entry.recipeId).coffeeDose;
-    final water = (entry.recipeId == "")? 0 :RECIPES.firstWhere((element) => element.name == entry.recipeId).waterWeightGrams;
+    final dose = entry.coffeeDose?.isNotEmpty == true
+        ? entry.coffeeDose!
+        : recipe?.coffeeDose ?? '0g';
+    final water = entry.waterWeightGrams ?? recipe?.waterWeightGrams ?? 0;
     final time = entry.timeTaken ?? 0;
     final grind = entry.grindSetting ?? '';
     final temp = entry.waterTemp ?? 0;
-    final beans = entry.beans ?? Beans(
-                id: '',
-                name: '',
-                origin: '',
-                roastLevel: '',
-                roastDate: DateTime(0, 0, 0, 0, 0, 0),
-                weight: 0,
-                notes: '',
-              );
-  
+    final beans =
+        entry.beans ??
+        Beans(
+          id: '',
+          name: '',
+          origin: '',
+          roastLevel: '',
+          roastDate: DateTime(0, 0, 0, 0, 0, 0),
+          weight: 0,
+          notes: '',
+        );
 
-
-    return Container(
-      height: 670,
-      width: 400,
+    return Material(
       color: BACKGROUND_COLOR,
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              border: Border.all(color: Colors.white),
-              borderRadius: BorderRadius.circular(4.0),
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                  color: Colors.black12,
-                ),
-              ],
-            ),
+      child: SafeArea(
+        child: SizedBox(
+          width: 420,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Rating",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    RatingBar(
-                      ignoreGestures: true,
-                      initialRating: (rating),
-                      minRating: 0.5,
-                      direction: Axis.horizontal,
-                      allowHalfRating: true,
-                      itemCount: 5,
-                      itemPadding: const EdgeInsets.symmetric(horizontal: 2),
-                      ratingWidget: RatingWidget(
-                        full: Icon(Icons.star, color: PRIMARY_COLOR),
-                        half: Icon(Icons.star_half, color: PRIMARY_COLOR),
-                        empty: Icon(Icons.star_border, color: PRIMARY_COLOR),
+                _SectionCard(
+                  color: BUTTON_COLOR.withValues(alpha: 0.55),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Rating',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          RatingBar(
+                            ignoreGestures: true,
+                            initialRating: rating,
+                            minRating: 0.5,
+                            direction: Axis.horizontal,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemSize: 28,
+                            itemPadding: const EdgeInsets.symmetric(
+                              horizontal: 1,
+                            ),
+                            ratingWidget: RatingWidget(
+                              full: Icon(Icons.star, color: PRIMARY_COLOR),
+                              half: Icon(Icons.star_half, color: PRIMARY_COLOR),
+                              empty: Icon(
+                                Icons.star_border,
+                                color: PRIMARY_COLOR,
+                              ),
+                            ),
+                            onRatingUpdate: (_) {},
+                          ),
+                        ],
                       ),
-                      onRatingUpdate: (rating) {},
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: notes,
-                    hintStyle: TextStyle(color: TEXT_COLOR),
+                      if (notes.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(notes),
+                      ],
+                    ],
                   ),
-                  style: TextStyle(color: TEXT_COLOR),
+                ),
+                const SizedBox(height: 12),
+                Text('Recipe', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _SectionCard(
+                  child: Column(
+                    children: [
+                      _DetailRow(label: 'Recipe', value: recipeId),
+                      _DetailRow(label: 'Dose', value: dose),
+                      _DetailRow(
+                        label: 'Water',
+                        value:
+                            '${water.toStringAsFixed(water.truncateToDouble() == water ? 0 : 1)}g',
+                      ),
+                      _DetailRow(label: 'Time Taken', value: '${time}s'),
+                      _DetailRow(label: 'Grind Setting', value: grind),
+                      _DetailRow(label: 'Water Temp', value: '$temp C'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text('Beans', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _SectionCard(
+                  child: Column(
+                    children: [
+                      _DetailRow(
+                        label: 'Beans',
+                        value: beans.name.isEmpty
+                            ? 'None selected'
+                            : beans.name,
+                      ),
+                      if (beans.origin?.isNotEmpty == true)
+                        _DetailRow(label: 'Origin', value: beans.origin!),
+                      if (beans.roastLevel?.isNotEmpty == true)
+                        _DetailRow(label: 'Roast', value: beans.roastLevel!),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'AI Feedback',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _AiFeedbackCard(
+                  feedback: entry.aiFeedback,
+                  model: entry.aiFeedbackModel,
+                  generatedAt: entry.aiFeedbackGeneratedAt,
+                  loading: _loadingFeedback,
+                  error: _feedbackError,
+                  onGenerate: _generateFeedback,
                 ),
               ],
             ),
           ),
-          SizedBox(height: 10), // Spacing between fields
-          Text("Recipe", style: TextStyle(color: TEXT_COLOR, fontSize: 20)),
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              border: Border.all(color: Colors.white),
-              borderRadius: BorderRadius.circular(4.0),
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                  color: Colors.black12,
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Recipe",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    Text(
-                      recipeId,
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Dose",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    Text(
-                      dose,
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Water",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    Text(
-                      "${water}g",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Time Taken",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    Text(
-                      "${time}s",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Grind Setting",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    Text(
-                      entry.grindSetting!,
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Water Temp",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    Text(
-                      "$temp",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                  ],
-                ),
-              ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+  final Color? color;
+
+  const _SectionCard({required this.child, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color ?? SURFACE_COLOR,
+        border: Border.all(color: OUTLINE_COLOR),
+        borderRadius: BorderRadius.circular(APP_RADIUS),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 15),
             ),
           ),
-          SizedBox(height: 12),
-          Text("Beans", style: TextStyle(color: TEXT_COLOR, fontSize: 20)),
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              border: Border.all(color: Colors.white),
-              borderRadius: BorderRadius.circular(4.0),
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                  color: Colors.black12,
-                ),
-              ],
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 4,
+            child: Text(
+              value.isEmpty ? '-' : value,
+              textAlign: TextAlign.right,
+              softWrap: true,
+              style: TextStyle(color: TEXT_COLOR, fontSize: 15),
             ),
-            child: (Column(
-              children: [
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Beans",
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                    Text(
-                      beans.name,
-                      style: TextStyle(color: TEXT_COLOR, fontSize: 18),
-                    ),
-                  ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiFeedbackCard extends StatelessWidget {
+  final Map<String, dynamic>? feedback;
+  final String? model;
+  final DateTime? generatedAt;
+  final bool loading;
+  final String? error;
+  final VoidCallback onGenerate;
+
+  const _AiFeedbackCard({
+    required this.feedback,
+    required this.model,
+    required this.generatedAt,
+    required this.loading,
+    required this.error,
+    required this.onGenerate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasFeedback = feedback != null;
+    final recommendations =
+        (feedback?['recommendations'] as List?)
+            ?.whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList() ??
+        [];
+    final nextRecipe = feedback?['nextBrewRecipe'] is Map
+        ? Map<String, dynamic>.from(feedback!['nextBrewRecipe'] as Map)
+        : <String, dynamic>{};
+
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasFeedback) ...[
+            Text(
+              feedback!['summary'] as String? ?? '',
+              style: TextStyle(
+                color: TEXT_COLOR,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              feedback!['tasteDiagnosis'] as String? ?? '',
+              style: TextStyle(color: TEXT_COLOR.withValues(alpha: 0.86)),
+            ),
+            const SizedBox(height: 14),
+            ...recommendations.map((rec) => _RecommendationTile(rec: rec)),
+            if (nextRecipe.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Next Brew',
+                style: TextStyle(
+                  color: TEXT_COLOR,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
-              ],
-            )),
+              ),
+              const SizedBox(height: 6),
+              _DetailRow(
+                label: 'Temp',
+                value: '${nextRecipe['temperature'] ?? '-'}',
+              ),
+              _DetailRow(
+                label: 'Grind',
+                value: '${nextRecipe['grindSize'] ?? '-'}',
+              ),
+              _DetailRow(
+                label: 'Time',
+                value: '${nextRecipe['brewTime'] ?? '-'}',
+              ),
+              _DetailRow(
+                label: 'Pours',
+                value: '${nextRecipe['pours'] ?? '-'}',
+              ),
+              _DetailRow(
+                label: 'Dose',
+                value: '${nextRecipe['coffeeDose'] ?? '-'}',
+              ),
+              _DetailRow(
+                label: 'Water',
+                value: '${nextRecipe['waterAmount'] ?? '-'}',
+              ),
+            ],
+            const SizedBox(height: 10),
+            Text(
+              'Confidence: ${feedback!['confidence'] ?? '-'}',
+              style: TextStyle(
+                color: TEXT_COLOR.withValues(alpha: 0.68),
+                fontSize: 12,
+              ),
+            ),
+            if (model != null || generatedAt != null)
+              Text(
+                [
+                  if (model != null) model,
+                  if (generatedAt != null)
+                    generatedAt!.toLocal().toString().split('.').first,
+                ].join(' | '),
+                style: TextStyle(
+                  color: TEXT_COLOR.withValues(alpha: 0.52),
+                  fontSize: 12,
+                ),
+              ),
+            const SizedBox(height: 14),
+          ] else
+            Text(
+              'Get personalized ideas for your next brew based on this log.',
+              style: TextStyle(color: TEXT_COLOR.withValues(alpha: 0.82)),
+            ),
+          if (error != null) ...[
+            const SizedBox(height: 10),
+            Text(error!, style: const TextStyle(color: Colors.redAccent)),
+          ],
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: loading ? null : onGenerate,
+            icon: loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome),
+            label: Text(
+              hasFeedback ? 'Regenerate Feedback' : 'Get AI Feedback',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecommendationTile extends StatelessWidget {
+  final Map<String, dynamic> rec;
+
+  const _RecommendationTile({required this.rec});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${rec['parameter'] ?? 'Adjustment'}',
+            style: TextStyle(color: TEXT_COLOR, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${rec['currentValue'] ?? '-'} -> ${rec['suggestedChange'] ?? '-'}',
+            style: TextStyle(color: PRIMARY_COLOR, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${rec['reason'] ?? ''}',
+            style: TextStyle(color: TEXT_COLOR.withValues(alpha: 0.82)),
           ),
         ],
       ),

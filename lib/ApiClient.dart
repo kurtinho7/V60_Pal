@@ -27,8 +27,11 @@ class ApiClient {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
-    return http.post(Uri.parse('$baseUrl$path'),
-      headers: headers, body: jsonEncode(body));
+    return http.post(
+      Uri.parse('$baseUrl$path'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
   }
 
   Future<http.Response> put(String path, Map<String, dynamic> body) async {
@@ -37,8 +40,11 @@ class ApiClient {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
-    return http.put(Uri.parse('$baseUrl$path'),
-      headers: headers, body: jsonEncode(body));
+    return http.put(
+      Uri.parse('$baseUrl$path'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
   }
 
   Future<http.Response> delete(String path) async {
@@ -50,14 +56,16 @@ class ApiClient {
     return http.delete(Uri.parse('$baseUrl$path'), headers: headers);
   }
 
-  Future<http.Response> patch(String path, Map<String, dynamic> body) async{
+  Future<http.Response> patch(String path, Map<String, dynamic> body) async {
     final token = await _idToken();
     final headers = {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
-    return http.patch(Uri.parse('$baseUrl$path'),
+    return http.patch(
+      Uri.parse('$baseUrl$path'),
       headers: headers,
-      body: jsonEncode(body));
-}
+      body: jsonEncode(body),
+    );
+  }
 }

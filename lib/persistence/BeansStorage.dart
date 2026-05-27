@@ -3,9 +3,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'dart:convert';
 
-
-
-
 // 2A.1: Locate your journal file
 Future<File> get _beansFile async {
   final dir = await getApplicationDocumentsDirectory();
@@ -13,8 +10,6 @@ Future<File> get _beansFile async {
   print('📂 Journal file path: $path');
   return File(path);
 }
-
-
 
 // 2A.2: Read and decode (returns an empty list if file not found or broken)
 Future<List<Beans>> loadEntries() async {

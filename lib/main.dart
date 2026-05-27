@@ -42,8 +42,11 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   int selectedIndex = 0;
 
-  // List of screens to display
-  final List<Widget> screens = [BrewScreen(), JournalScreen(), BeansScreen()];
+  final List<Widget> screens = const [
+    BrewScreen(),
+    JournalScreen(),
+    BeansScreen(),
+  ];
 
   final List<String> screenNames = ["Brew", "Journal", "Beans"];
 
@@ -57,32 +60,134 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final auth = FirebaseAuth.instance;
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        textTheme: GoogleFonts.overpassTextTheme(),
+        useMaterial3: true,
+        scaffoldBackgroundColor: BACKGROUND_COLOR,
+        textTheme: GoogleFonts.overpassTextTheme().copyWith(
+          headlineMedium: GoogleFonts.overpass(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: TEXT_COLOR,
+          ),
+          titleLarge: GoogleFonts.overpass(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: TEXT_COLOR,
+          ),
+          titleMedium: GoogleFonts.overpass(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: TEXT_COLOR,
+          ),
+          bodyMedium: GoogleFonts.overpass(color: TEXT_COLOR),
+        ),
         colorScheme: COLOR_SCHEME,
         elevatedButtonTheme: ELEVATED_BUTTON_THEME,
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: PRIMARY_COLOR,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(48, 48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(APP_RADIUS),
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: PRIMARY_COLOR,
+            side: BorderSide(color: OUTLINE_COLOR),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(APP_RADIUS),
+            ),
+          ),
+        ),
+        appBarTheme: AppBarTheme(
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          backgroundColor: BACKGROUND_COLOR,
+          foregroundColor: TEXT_COLOR,
+          centerTitle: false,
+          titleTextStyle: GoogleFonts.overpass(
+            color: TEXT_COLOR,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          height: 72,
+          backgroundColor: SURFACE_COLOR,
+          indicatorColor: BUTTON_COLOR,
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => GoogleFonts.overpass(
+              color: states.contains(WidgetState.selected)
+                  ? PRIMARY_COLOR
+                  : MUTED_TEXT_COLOR,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+          iconTheme: WidgetStateProperty.resolveWith(
+            (states) => IconThemeData(
+              color: states.contains(WidgetState.selected)
+                  ? PRIMARY_COLOR
+                  : MUTED_TEXT_COLOR,
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: SURFACE_TINT_COLOR.withValues(alpha: 0.55),
+          labelStyle: TextStyle(color: MUTED_TEXT_COLOR),
+          hintStyle: TextStyle(color: MUTED_TEXT_COLOR.withValues(alpha: 0.75)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(APP_RADIUS),
+            borderSide: BorderSide(color: OUTLINE_COLOR),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(APP_RADIUS),
+            borderSide: BorderSide(color: OUTLINE_COLOR),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(APP_RADIUS),
+            borderSide: BorderSide(color: PRIMARY_COLOR, width: 1.5),
+          ),
+        ),
+        cardTheme: CardThemeData(
+          color: SURFACE_COLOR,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(APP_RADIUS),
+            side: BorderSide(color: OUTLINE_COLOR),
+          ),
+        ),
+        drawerTheme: DrawerThemeData(backgroundColor: BACKGROUND_COLOR),
+        dialogTheme: DialogThemeData(
+          backgroundColor: SURFACE_COLOR,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(APP_RADIUS),
+          ),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: TEXT_COLOR,
+          contentTextStyle: const TextStyle(color: Colors.white),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(APP_RADIUS),
+          ),
+        ),
       ),
       home: Builder(
         builder: (context) {
           return Scaffold(
             appBar: AppBar(
-              title: Text(
-                screenNames[selectedIndex],
-                style: TextStyle(color: Colors.black87, fontSize: 32),
-              ),
-              backgroundColor: Colors.blueAccent,
-              centerTitle: false,
+              title: Text(screenNames[selectedIndex]),
               actions: [
-                // if (selectedIndex == 0)
-                //   IconButton(
-                //     icon: Icon(Icons.menu),
-                //     onPressed: () {
-                //       Scaffold.of(context).openDrawer();
-                //     },
-                //   ),
                 if (selectedIndex == 1)
                   IconButton(
-                    icon: Icon(Icons.add),
+                    tooltip: 'Add journal entry',
+                    icon: const Icon(Icons.add_circle_outline),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -94,7 +199,8 @@ class _MyAppState extends State<MyApp> {
                   ),
                 if (selectedIndex == 2)
                   IconButton(
-                    icon: Icon(Icons.add),
+                    tooltip: 'Add beans',
+                    icon: const Icon(Icons.add_circle_outline),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -110,42 +216,31 @@ class _MyAppState extends State<MyApp> {
               child: ListView(
                 padding: EdgeInsets.zero, // no extra padding from ListView
                 children: [
-                  // Custom header (instead of DrawerHeader)
                   Container(
-                    color: Colors.blue, // optional background color
-                    padding: EdgeInsets.all(23), // tweak spacing around text
+                    color: BUTTON_COLOR,
+                    padding: const EdgeInsets.fromLTRB(20, 56, 20, 22),
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Settings',
-                      style: TextStyle(
-                        color: TEXT_COLOR,
-                        fontSize: 24,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
 
-                  // Next child right below without blank space
                   StreamBuilder(
                     stream: auth.authStateChanges(),
                     initialData: auth.currentUser,
                     builder: (context, snap) {
                       final user = snap.data;
                       final signInText = user?.email ?? 'Sign In';
-                      return Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.person, size: 24,),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const AuthGate(),
-                                ),
-                              );
-                            },
-                          ),
-                          Text(signInText, style: TextStyle(color: TEXT_COLOR, fontSize: 16)),
-                        ],
+                      return ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: Text(signInText),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const AuthGate()),
+                          );
+                        },
                       );
                     },
                   ),
@@ -154,21 +249,24 @@ class _MyAppState extends State<MyApp> {
             ),
 
             body: screens[selectedIndex], // Display selected screen
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: selectedIndex,
-              onTap: onItemTapped,
-              items: const [
-                BottomNavigationBarItem(
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onItemTapped,
+              destinations: const [
+                NavigationDestination(
                   icon: Icon(Icons.coffee_maker_outlined),
-                  label: "Brew",
+                  selectedIcon: Icon(Icons.coffee_maker),
+                  label: 'Brew',
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.book),
-                  label: "Journal",
+                NavigationDestination(
+                  icon: Icon(Icons.book_outlined),
+                  selectedIcon: Icon(Icons.book),
+                  label: 'Journal',
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.free_breakfast_rounded),
-                  label: "Beans",
+                NavigationDestination(
+                  icon: Icon(Icons.local_cafe_outlined),
+                  selectedIcon: Icon(Icons.local_cafe),
+                  label: 'Beans',
                 ),
               ],
             ),

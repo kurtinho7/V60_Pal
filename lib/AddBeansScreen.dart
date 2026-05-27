@@ -6,6 +6,7 @@ import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/BeansList.dart';
 import 'package:v60pal/services/BeansService.dart';
+import 'package:v60pal/widgets/app_ui.dart';
 
 class AddBeansScreen extends StatefulWidget {
   const AddBeansScreen({super.key});
@@ -73,27 +74,28 @@ class _AddBeansScreenState extends State<AddBeansScreen> {
     }
   }
 
-  bool _isMongoId(String? s) =>
-    s != null && RegExp(r'^[a-fA-F0-9]{24}$').hasMatch(s);
+  String? _extractId(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      final direct = json['_id'] ?? json['id'];
+      if (direct is String && direct.isNotEmpty) return direct;
+      if (direct is Map && direct[r'$oid'] is String) {
+        return direct[r'$oid'] as String;
+      }
 
-String? _extractId(dynamic json) {
-  if (json is Map<String, dynamic>) {
-    final direct = json['_id'] ?? json['id'];
-    if (direct is String && direct.isNotEmpty) return direct;
-    if (direct is Map && direct[r'$oid'] is String) return direct[r'$oid'] as String;
+      final inserted = json['insertedId'];
+      if (inserted is String) return inserted;
+      if (inserted is Map && inserted[r'$oid'] is String) {
+        return inserted[r'$oid'] as String;
+      }
 
-    final inserted = json['insertedId'];
-    if (inserted is String) return inserted;
-    if (inserted is Map && inserted[r'$oid'] is String) return inserted[r'$oid'] as String;
-
-    for (final key in ['bean', 'data', 'result']) {
-      final nested = json[key];
-      final id = _extractId(nested);
-      if (id != null) return id;
+      for (final key in ['bean', 'data', 'result']) {
+        final nested = json[key];
+        final id = _extractId(nested);
+        if (id != null) return id;
+      }
     }
+    return null;
   }
-  return null;
-}
 
   void _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -129,7 +131,7 @@ String? _extractId(dynamic json) {
         notes: newNotes.trim(),
       );
       final serverId = _extractId(res);
-      print('$serverId is the server id');
+      debugPrint('$serverId is the server id');
       final bean = Beans(
         id: serverId!,
         name: _nameCtrl.text.trim(),
@@ -157,45 +159,27 @@ String? _extractId(dynamic json) {
 
   @override
   Widget build(BuildContext context) {
-    final textStyleHeader = TextStyle(color: TEXT_COLOR, fontSize: 20);
+    final textStyleHeader = Theme.of(context).textTheme.titleMedium;
     Widget todayText = Text(
       "${todayDate.year}-${todayDate.month.toString().padLeft(2, '0')}-${todayDate.day.toString().padLeft(2, '0')}",
-      style: TextStyle(color: TEXT_COLOR),
     );
     if (_roastDate != null) {
       todayText = Text(
         "${_roastDate!.year}-${_roastDate!.month.toString().padLeft(2, '0')}-${_roastDate!.day.toString().padLeft(2, '0')}",
-        style: TextStyle(color: TEXT_COLOR),
       );
     }
 
     Widget card({required Widget child}) {
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white10,
-          border: Border.all(color: Colors.white),
-          borderRadius: BorderRadius.circular(4.0),
-          boxShadow: const [
-            BoxShadow(
-              blurRadius: 4,
-              offset: Offset(0, 2),
-              color: Colors.black12,
-            ),
-          ],
-        ),
-        child: child,
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: AppSectionCard(child: child),
       );
     }
 
-    InputDecoration dec(String hint) => InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: Colors.white38),
-      border: InputBorder.none,
-    );
+    InputDecoration dec(String hint) => appInputDecoration(hint);
 
     return Scaffold(
+      backgroundColor: BACKGROUND_COLOR,
       appBar: AppBar(
         automaticallyImplyLeading: true,
         title: const Text('Add Beans'),
@@ -214,9 +198,9 @@ String? _extractId(dynamic json) {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "New Beans",
-                style: TextStyle(color: TEXT_COLOR, fontSize: 35),
+              const AppPageTitle(
+                title: 'New Beans',
+                subtitle: 'Save the roast details you want close at hand.',
               ),
               const SizedBox(height: 10),
 
@@ -229,13 +213,11 @@ String? _extractId(dynamic json) {
                     const SizedBox(height: 12),
                     TextField(
                       controller: _nameCtrl,
-                      style: TextStyle(color: TEXT_COLOR),
                       decoration: dec('Name (e.g., Ethiopia Koke)'),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _originCtrl,
-                      style: TextStyle(color: TEXT_COLOR),
                       decoration: dec('Origin (e.g., Ethiopia, Guatemala)'),
                     ),
                     const SizedBox(height: 12),
@@ -253,16 +235,12 @@ String? _extractId(dynamic json) {
                                     .map(
                                       (r) => DropdownMenuItem(
                                         value: r,
-                                        child: Text(
-                                          r,
-                                          style: TextStyle(color: TEXT_COLOR),
-                                        ),
+                                        child: Text(r),
                                       ),
                                     )
                                     .toList(),
                                 onChanged: (v) =>
                                     setState(() => _selectedRoast = v),
-                                dropdownColor: Colors.black,
                                 isExpanded: true,
                               ),
                             ),
@@ -303,14 +281,13 @@ String? _extractId(dynamic json) {
                       children: [
                         Text(
                           "Weight",
-                          style: TextStyle(color: TEXT_COLOR, fontSize: 18),
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
                         Expanded(
                           child: TextField(
                             controller: _weightCtrl,
                             textAlign: TextAlign.right,
                             textDirection: TextDirection.rtl,
-                            style: TextStyle(color: TEXT_COLOR),
                             decoration: dec('Weight (g)'),
                             keyboardType: TextInputType.number,
                             inputFormatters: [
@@ -333,7 +310,6 @@ String? _extractId(dynamic json) {
                     const SizedBox(height: 12),
                     TextField(
                       controller: _notesCtrl,
-                      style: TextStyle(color: TEXT_COLOR),
                       maxLines: null,
                       decoration: dec('Tasting notes, brew tips, etc.'),
                     ),

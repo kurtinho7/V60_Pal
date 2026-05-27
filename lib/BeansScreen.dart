@@ -6,6 +6,7 @@ import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/BeansList.dart';
 import 'package:intl/intl.dart';
 import 'package:v60pal/services/BeansService.dart';
+import 'package:v60pal/widgets/app_ui.dart';
 
 enum BeansAction { edit, delete }
 
@@ -44,7 +45,8 @@ class _BeansScreenState extends State<BeansScreen> {
 
   Color _freshnessColor(double pct) {
     // 0 => red, 1 => green
-    return Color.lerp(Colors.red, Colors.green, pct) ?? Colors.green;
+    return Color.lerp(const Color(0xFFB45D4B), SUCCESS_COLOR, pct) ??
+        SUCCESS_COLOR;
   }
 
   String _ageLabel(DateTime roastDate) {
@@ -101,7 +103,6 @@ class _BeansScreenState extends State<BeansScreen> {
     final newAmount = editController.text;
     final newAmountInt = int.parse(newAmount);
 
-
     beansSvc.update(id, weight: newAmountInt);
     final beansList = context.read<BeansList>();
     await beansList.editEntry(id, newAmountInt);
@@ -125,8 +126,8 @@ class _BeansScreenState extends State<BeansScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white24),
+                  borderRadius: BorderRadius.circular(APP_RADIUS),
+                  border: Border.all(color: OUTLINE_COLOR),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -156,8 +157,8 @@ class _BeansScreenState extends State<BeansScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white24),
+                  borderRadius: BorderRadius.circular(APP_RADIUS),
+                  border: Border.all(color: OUTLINE_COLOR),
                 ),
                 child: ListTile(
                   leading: const Icon(Icons.close),
@@ -178,16 +179,14 @@ class _BeansScreenState extends State<BeansScreen> {
     final beansList = context.watch<BeansList>();
     final beans = List<Beans>.from(beansList.entries)
       ..sort((a, b) => b.roastDate.compareTo(a.roastDate)); // newest first
-    
 
     return Scaffold(
+      backgroundColor: BACKGROUND_COLOR,
       body: beans.isEmpty
-          ? Center(
-              child: Text(
-                'No beans yet.\nTap + to add your first bag!',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: TEXT_COLOR, fontSize: 16),
-              ),
+          ? const AppEmptyState(
+              icon: Icons.local_cafe_outlined,
+              title: 'No beans yet',
+              message: 'Tap + to add your first bag.',
             )
           : LayoutBuilder(
               builder: (context, constraints) {
@@ -219,7 +218,7 @@ class _BeansScreenState extends State<BeansScreen> {
                     final roastDateStr = DateFormat.yMMMd().format(b.roastDate);
 
                     return InkWell(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(APP_RADIUS),
                       onTap: () async {
                         final action = await showBeansActions(context, b);
                         if (action == null) return;
@@ -229,19 +228,11 @@ class _BeansScreenState extends State<BeansScreen> {
                             await showDialog(
                               context: context,
                               builder: (ctx) => AlertDialog(
-                                title: Text(
-                                  'Edit Beans Amount',
-                                  style: TextStyle(color: TEXT_COLOR),
-                                ),
+                                title: Text('Edit Beans Amount'),
                                 content: TextField(
                                   controller: editController,
-                                  style: TextStyle(color: TEXT_COLOR),
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     hintText: 'New Amount (g)',
-                                    hintStyle: const TextStyle(
-                                      color: Colors.white38,
-                                    ),
-                                    border: InputBorder.none,
                                   ),
                                 ),
                                 actions: [
@@ -294,14 +285,14 @@ class _BeansScreenState extends State<BeansScreen> {
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white10,
-                          border: Border.all(color: Colors.white24),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: const [
+                          color: SURFACE_COLOR,
+                          border: Border.all(color: OUTLINE_COLOR),
+                          borderRadius: BorderRadius.circular(APP_RADIUS),
+                          boxShadow: [
                             BoxShadow(
-                              blurRadius: 6,
-                              offset: Offset(0, 3),
-                              color: Colors.black26,
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                              color: Colors.black.withValues(alpha: 0.04),
                             ),
                           ],
                         ),
@@ -323,7 +314,7 @@ class _BeansScreenState extends State<BeansScreen> {
                                     style: TextStyle(
                                       color: TEXT_COLOR,
                                       fontSize: 18,
-                                      fontWeight: FontWeight.w700,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                   ),
                                 ),
@@ -334,9 +325,11 @@ class _BeansScreenState extends State<BeansScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white12,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white24),
+                                    color: BUTTON_COLOR,
+                                    borderRadius: BorderRadius.circular(
+                                      APP_RADIUS,
+                                    ),
+                                    border: Border.all(color: OUTLINE_COLOR),
                                   ),
                                   child: Text(
                                     (b.roastLevel?.isNotEmpty ?? false)
@@ -359,7 +352,7 @@ class _BeansScreenState extends State<BeansScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: TEXT_COLOR.withOpacity(0.85),
+                                color: MUTED_TEXT_COLOR,
                                 fontSize: 14,
                               ),
                             ),
@@ -377,9 +370,7 @@ class _BeansScreenState extends State<BeansScreen> {
                                     child: LinearProgressIndicator(
                                       value: pct,
                                       minHeight: 10,
-                                      backgroundColor: Colors.white.withOpacity(
-                                        0.10,
-                                      ),
+                                      backgroundColor: SURFACE_TINT_COLOR,
                                       valueColor: AlwaysStoppedAnimation<Color>(
                                         color,
                                       ),
@@ -403,7 +394,7 @@ class _BeansScreenState extends State<BeansScreen> {
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.right,
                                       style: TextStyle(
-                                        color: TEXT_COLOR.withValues(
+                                        color: MUTED_TEXT_COLOR.withValues(
                                           alpha: 0.8,
                                         ),
                                         fontSize: 12,
@@ -416,7 +407,7 @@ class _BeansScreenState extends State<BeansScreen> {
                                       Icon(
                                         Icons.scale,
                                         size: 16,
-                                        color: TEXT_COLOR,
+                                        color: PRIMARY_COLOR,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -440,7 +431,7 @@ class _BeansScreenState extends State<BeansScreen> {
                                 Icon(
                                   Icons.local_fire_department,
                                   size: 16,
-                                  color: TEXT_COLOR,
+                                  color: PRIMARY_COLOR,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(

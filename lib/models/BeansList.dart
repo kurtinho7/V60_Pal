@@ -6,7 +6,7 @@ import 'package:v60pal/persistence/BeansStorage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:v60pal/services/BeansService.dart';
 
-class BeansList extends ChangeNotifier{
+class BeansList extends ChangeNotifier {
   List<Beans> _entries = [];
 
   List<Beans> get entries => List.unmodifiable(_entries);
@@ -43,5 +43,4 @@ class BeansList extends ChangeNotifier{
     addEntry(editedBeans);
     notifyListeners();
   }
-
 }
