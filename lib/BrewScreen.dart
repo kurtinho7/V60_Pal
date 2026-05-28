@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:v60pal/BrewTimerPage.dart';
+import 'package:v60pal/CustomizeRecipeScreen.dart';
 import 'package:v60pal/Theme.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/widgets/app_ui.dart';
@@ -29,6 +30,15 @@ class _BrewScreenState extends State<BrewScreen> {
   Recipe get _selectedRecipe => RECIPES[_selectedIndex];
 
   void _onBrewPressed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CustomizeRecipeScreen(recipe: _selectedRecipe),
+      ),
+    );
+  }
+
+  void _onQuickStartPressed() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -147,10 +157,22 @@ class _BrewScreenState extends State<BrewScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _onBrewPressed,
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Start brew'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: _onBrewPressed,
+                              icon: const Icon(Icons.tune),
+                              label: const Text('Start brew'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          IconButton.filledTonal(
+                            tooltip: 'Quick start preset',
+                            onPressed: _onQuickStartPressed,
+                            icon: const Icon(Icons.flash_on),
+                          ),
+                        ],
                       ),
                     ],
                   ),

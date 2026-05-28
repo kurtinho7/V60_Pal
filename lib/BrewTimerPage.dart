@@ -80,6 +80,11 @@ class _BrewTimerPageState extends State<BrewTimerPage> {
                     label: 'Time',
                     value: recipe.brewTime,
                   ),
+                  _RecipeFact(
+                    icon: Icons.thermostat_outlined,
+                    label: 'Temp',
+                    value: '${recipe.waterTemp} C',
+                  ),
                 ],
               ),
               const SizedBox(height: 16),

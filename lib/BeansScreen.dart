@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:v60pal/ApiClient.dart';
 import 'package:v60pal/Theme.dart';
+import 'package:v60pal/models/BeanMemory.dart';
 import 'package:v60pal/models/Beans.dart';
 import 'package:v60pal/models/BeansList.dart';
 import 'package:intl/intl.dart';
 import 'package:v60pal/services/BeansService.dart';
 import 'package:v60pal/widgets/app_ui.dart';
 
-enum BeansAction { edit, delete }
+enum BeansAction { memory, compare, edit, delete }
 
 class BeansScreen extends StatefulWidget {
   const BeansScreen({super.key});
@@ -108,6 +109,527 @@ class _BeansScreenState extends State<BeansScreen> {
     await beansList.editEntry(id, newAmountInt);
   }
 
+  String _formatRating(double? rating) {
+    if (rating == null) return '—';
+    return rating.toStringAsFixed(rating % 1 == 0 ? 0 : 1);
+  }
+
+  String _formatSeconds(int? seconds) {
+    if (seconds == null || seconds <= 0) return '—';
+    final minutes = seconds ~/ 60;
+    final remainder = seconds % 60;
+    return '$minutes:${remainder.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '—';
+    return DateFormat.yMMMd().format(date);
+  }
+
+  String _formatGrams(double? grams) {
+    if (grams == null || grams <= 0) return '—';
+    return '${grams.toStringAsFixed(grams.truncateToDouble() == grams ? 0 : 1)}g';
+  }
+
+  String _formatTaste(BeanBrewSummary brew) {
+    final labels = <String>[];
+    final feedback = brew.tastingFeedback;
+    if (feedback != null) {
+      for (final value in feedback.values) {
+        if (value is List) {
+          labels.addAll(value.map((item) => item.toString()));
+        } else if (value != null && value.toString().trim().isNotEmpty) {
+          labels.add(value.toString());
+        }
+      }
+    }
+    if (labels.isNotEmpty) return labels.take(4).join(', ');
+    return brew.notes?.trim().isNotEmpty == true ? brew.notes!.trim() : '—';
+  }
+
+  String _formatRecipeValue(dynamic value) {
+    if (value == null) return '—';
+    if (value is Map) {
+      return value.values
+          .where((item) => item != null && item.toString().trim().isNotEmpty)
+          .join(' · ');
+    }
+    return value.toString();
+  }
+
+  Widget _memoryMetric(String label, String value, IconData icon) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: PRIMARY_COLOR),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            '$label $value',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: TEXT_COLOR, fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _memorySection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: TEXT_COLOR,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _brewSummary(BeanBrewSummary? brew) {
+    if (brew == null) {
+      return Text(
+        'No brew logged yet.',
+        style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 13),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            _memoryMetric('Rating', _formatRating(brew.rating), Icons.star),
+            _memoryMetric(
+              'Temp',
+              '${brew.waterTempC ?? '—'} C',
+              Icons.thermostat,
+            ),
+            _memoryMetric(
+              'Time',
+              _formatSeconds(brew.brewTimeSeconds),
+              Icons.timer_outlined,
+            ),
+            _memoryMetric('Grind', brew.grindSetting ?? '—', Icons.grain),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          [
+            if ((brew.recipeName?.isNotEmpty ?? false)) brew.recipeName,
+            if ((brew.coffeeDose?.isNotEmpty ?? false)) brew.coffeeDose,
+            if (brew.waterWeightGrams != null)
+              '${brew.waterWeightGrams!.round()}g water',
+            if (brew.pourCount != null) '${brew.pourCount} pours',
+            _formatDate(brew.date),
+          ].whereType<String>().join(' · '),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 12),
+        ),
+        if ((brew.notes?.isNotEmpty ?? false)) ...[
+          const SizedBox(height: 8),
+          Text(
+            brew.notes!,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: TEXT_COLOR, fontSize: 13),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _recommendedBrew(BeanRecommendedBrew? recommendation) {
+    if (recommendation == null) {
+      return Text(
+        'No recommendation yet.',
+        style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 13),
+      );
+    }
+
+    final recipe = recommendation.recipe ?? const {};
+    final isAiRecipe = recommendation.source == 'ai-feedback';
+    final values = isAiRecipe
+        ? [
+            'Temp ${_formatRecipeValue(recipe['temperature'])}',
+            'Grind ${_formatRecipeValue(recipe['grindSize'])}',
+            'Time ${_formatRecipeValue(recipe['brewTime'])}',
+            'Pours ${_formatRecipeValue(recipe['pours'])}',
+            'Dose ${_formatRecipeValue(recipe['coffeeDose'])}',
+            'Water ${_formatRecipeValue(recipe['waterAmount'])}',
+          ]
+        : [
+            if (recipe['rating'] != null)
+              'Rating ${_formatRecipeValue(recipe['rating'])}',
+            if (recipe['waterTempC'] != null)
+              'Temp ${_formatRecipeValue(recipe['waterTempC'])} C',
+            if (recipe['grindSetting'] != null)
+              'Grind ${_formatRecipeValue(recipe['grindSetting'])}',
+            if (recipe['brewTimeSeconds'] != null)
+              'Time ${_formatSeconds((recipe['brewTimeSeconds'] as num).toInt())}',
+          ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: values
+              .where((value) => !value.endsWith('—'))
+              .map(
+                (value) => Chip(
+                  label: Text(value),
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: BUTTON_COLOR,
+                  side: BorderSide(color: OUTLINE_COLOR),
+                ),
+              )
+              .toList(),
+        ),
+        if ((recommendation.reason?.isNotEmpty ?? false)) ...[
+          const SizedBox(height: 8),
+          Text(
+            recommendation.reason!,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 13),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _triedValues(BeanTriedSummary tried) {
+    final labels = [
+      ...tried.recipes.map((value) => 'Recipe $value'),
+      ...tried.temperaturesC.map((value) => '$value C'),
+      ...tried.grindSettings.map((value) => 'Grind $value'),
+      ...tried.brewTimesSeconds.map((value) => _formatSeconds(value)),
+      ...tried.coffeeDoses,
+      ...tried.waterAmountsGrams.map((value) => '${value}g water'),
+      ...tried.pourCounts.map((value) => '$value pours'),
+    ].where((value) => value.trim().isNotEmpty && value != '—').take(18);
+
+    if (labels.isEmpty) {
+      return Text(
+        'No recipe variables recorded yet.',
+        style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 13),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: labels
+          .map(
+            (value) => Chip(
+              label: Text(value),
+              visualDensity: VisualDensity.compact,
+              backgroundColor: SURFACE_TINT_COLOR,
+              side: BorderSide(color: OUTLINE_COLOR),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _compareCell(String value, {bool header = false, double width = 118}) {
+    return SizedBox(
+      width: width,
+      child: Text(
+        value,
+        maxLines: header ? 2 : 3,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: header ? TEXT_COLOR : MUTED_TEXT_COLOR,
+          fontSize: header ? 12 : 13,
+          fontWeight: header ? FontWeight.w800 : FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _comparisonRow(String label, List<String> values) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: OUTLINE_COLOR)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _compareCell(label, header: true, width: 92),
+          ...values.map(_compareCell),
+        ],
+      ),
+    );
+  }
+
+  Widget _lastBrewsComparison(List<BeanBrewSummary> brews) {
+    if (brews.isEmpty) {
+      return Text(
+        'No brews logged yet.',
+        style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 13),
+      );
+    }
+
+    final columns = brews.take(3).toList();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: 92 + (118 * columns.length).toDouble(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _comparisonRow(
+              'Brew',
+              columns
+                  .map(
+                    (brew) =>
+                        '${_formatDate(brew.date)}\n${brew.recipeName ?? 'Custom'}',
+                  )
+                  .toList(),
+            ),
+            _comparisonRow(
+              'Grind',
+              columns.map((brew) => brew.grindSetting ?? '—').toList(),
+            ),
+            _comparisonRow(
+              'Temp',
+              columns.map((brew) => '${brew.waterTempC ?? '—'} C').toList(),
+            ),
+            _comparisonRow(
+              'Time',
+              columns
+                  .map((brew) => _formatSeconds(brew.brewTimeSeconds))
+                  .toList(),
+            ),
+            _comparisonRow(
+              'Ratio',
+              columns.map((brew) => brew.ratio ?? '—').toList(),
+            ),
+            _comparisonRow(
+              'Dose',
+              columns.map((brew) => brew.coffeeDose ?? '—').toList(),
+            ),
+            _comparisonRow(
+              'Water',
+              columns
+                  .map((brew) => _formatGrams(brew.waterWeightGrams))
+                  .toList(),
+            ),
+            _comparisonRow(
+              'Rating',
+              columns.map((brew) => _formatRating(brew.rating)).toList(),
+            ),
+            _comparisonRow('Taste', columns.map(_formatTaste).toList()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBeanMemory(Beans bean) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.78,
+          minChildSize: 0.45,
+          maxChildSize: 0.92,
+          expand: false,
+          builder: (ctx, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).colorScheme.surface,
+                borderRadius: BorderRadius.circular(APP_RADIUS),
+                border: Border.all(color: OUTLINE_COLOR),
+              ),
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+              child: FutureBuilder<BeanMemory>(
+                future: beansSvc.memory(bean.id),
+                builder: (ctx, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Could not load recipe memory.',
+                        style: TextStyle(color: MUTED_TEXT_COLOR),
+                      ),
+                    );
+                  }
+
+                  final memory = snapshot.data!;
+                  return ListView(
+                    controller: scrollController,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              memory.bean.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: TEXT_COLOR,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          _memoryMetric(
+                            'Brews',
+                            '${memory.brewCount}',
+                            Icons.coffee,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      _memorySection('Recommended next brew', [
+                        _recommendedBrew(memory.recommendedNextBrew),
+                      ]),
+                      const SizedBox(height: 20),
+                      _memorySection('Best-rated brew', [
+                        _brewSummary(memory.bestRatedBrew),
+                      ]),
+                      const SizedBox(height: 20),
+                      _memorySection('Last brew', [
+                        _brewSummary(memory.lastBrew),
+                      ]),
+                      const SizedBox(height: 20),
+                      _memorySection('Already tried', [
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            _memoryMetric(
+                              'Average',
+                              _formatRating(memory.tried.averageRating),
+                              Icons.trending_up,
+                            ),
+                            _memoryMetric(
+                              'Best',
+                              _formatRating(memory.tried.bestRating),
+                              Icons.workspace_premium_outlined,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        _triedValues(memory.tried),
+                      ]),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showBeanComparison(Beans bean) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.68,
+          minChildSize: 0.42,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (ctx, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).colorScheme.surface,
+                borderRadius: BorderRadius.circular(APP_RADIUS),
+                border: Border.all(color: OUTLINE_COLOR),
+              ),
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+              child: FutureBuilder<BeanMemory>(
+                future: beansSvc.memory(bean.id),
+                builder: (ctx, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Could not load brew comparison.',
+                        style: TextStyle(color: MUTED_TEXT_COLOR),
+                      ),
+                    );
+                  }
+
+                  final memory = snapshot.data!;
+                  return ListView(
+                    controller: scrollController,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Compare last 3',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: TEXT_COLOR,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          _memoryMetric(
+                            'Brews',
+                            '${memory.lastBrews.length}',
+                            Icons.compare_arrows,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        memory.bean.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: MUTED_TEXT_COLOR, fontSize: 13),
+                      ),
+                      const SizedBox(height: 18),
+                      _lastBrewsComparison(memory.lastBrews),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<BeansAction?> showBeansActions(BuildContext context, Beans bean) {
     return showModalBottomSheet<BeansAction>(
       context: context,
@@ -132,6 +654,18 @@ class _BeansScreenState extends State<BeansScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    ListTile(
+                      leading: const Icon(Icons.auto_awesome_outlined),
+                      title: const Text('Recipe memory'),
+                      onTap: () => Navigator.pop(ctx, BeansAction.memory),
+                    ),
+                    const Divider(height: 0),
+                    ListTile(
+                      leading: const Icon(Icons.compare_arrows),
+                      title: const Text('Compare last 3'),
+                      onTap: () => Navigator.pop(ctx, BeansAction.compare),
+                    ),
+                    const Divider(height: 0),
                     ListTile(
                       leading: const Icon(Icons.edit_outlined),
                       title: const Text('Edit'),
@@ -222,8 +756,15 @@ class _BeansScreenState extends State<BeansScreen> {
                       onTap: () async {
                         final action = await showBeansActions(context, b);
                         if (action == null) return;
+                        if (!context.mounted) return;
 
                         switch (action) {
+                          case BeansAction.memory:
+                            await _showBeanMemory(b);
+                            break;
+                          case BeansAction.compare:
+                            await _showBeanComparison(b);
+                            break;
                           case BeansAction.edit:
                             await showDialog(
                               context: context,
@@ -242,7 +783,6 @@ class _BeansScreenState extends State<BeansScreen> {
                                   ),
                                   FilledButton(
                                     onPressed: () {
-                                      print('${b.id} is the bean id');
                                       editBeans(b.id);
                                       Navigator.pop(ctx, false);
                                     },

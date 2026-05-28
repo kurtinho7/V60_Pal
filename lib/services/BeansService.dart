@@ -1,5 +1,6 @@
 import 'dart:convert';
 import '../ApiClient.dart';
+import '../models/BeanMemory.dart';
 
 class BeansService {
   BeansService(this.api);
@@ -11,6 +12,14 @@ class BeansService {
       return (jsonDecode(res.body) as List).cast<Map<String, dynamic>>();
     }
     throw Exception('Beans list failed: ${res.statusCode} ${res.body}');
+  }
+
+  Future<BeanMemory> memory(String id) async {
+    final res = await api.get('/beans/${Uri.encodeComponent(id)}/memory');
+    if (res.statusCode == 200) {
+      return BeanMemory.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    }
+    throw Exception('Bean memory failed: ${res.statusCode} ${res.body}');
   }
 
   Future<Map<String, dynamic>> create({
@@ -58,8 +67,9 @@ class BeansService {
     void put(String k, dynamic v) {
       if (includeNulls) {
         body[k] = v;
-      } else if (v != null)
+      } else if (v != null) {
         body[k] = v;
+      }
     }
 
     put('name', name);

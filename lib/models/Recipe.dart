@@ -29,6 +29,37 @@ class Recipe {
     required this.pourAmounts,
   });
 
+  Recipe copyWith({
+    String? id,
+    String? name,
+    double? waterWeightGrams,
+    int? waterTemp,
+    List<int>? pourSteps,
+    String? coffeeDose,
+    String? grindSize,
+    String? brewTime,
+    List<int>? pourAmounts,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      waterWeightGrams: waterWeightGrams ?? this.waterWeightGrams,
+      waterTemp: waterTemp ?? this.waterTemp,
+      pourSteps: List<int>.from(pourSteps ?? this.pourSteps),
+      coffeeDose: coffeeDose ?? this.coffeeDose,
+      grindSize: grindSize ?? this.grindSize,
+      brewTime: brewTime ?? this.brewTime,
+      pourAmounts: List<int>.from(pourAmounts ?? this.pourAmounts),
+    );
+  }
+
+  Recipe cloneAsVariant({String? id, String? name}) {
+    return copyWith(
+      id: id ?? '${this.id}-custom',
+      name: name ?? '${this.name} Custom',
+    );
+  }
+
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
       id: json['id'] as String,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:v60pal/JournalEntryViewScreen.dart';
 import 'package:v60pal/Theme.dart';
+import 'package:v60pal/models/BrewGuardrails.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Journal.dart';
 import 'package:v60pal/services/BeansService.dart';
@@ -185,11 +186,11 @@ class _JournalScreenState extends State<JournalScreen> {
                       month: MONTHS[entry.date.month - 1],
                       day: entry.date.day.toString(),
                       title: recipeLabel,
-                      rating: entry.rating!,
-                      tempC: entry.waterTemp!,
-                      timeSec: entry.timeTaken!,
-                      grind: entry.grindSetting!,
-                      notes: entry.notes!,
+                      rating: entry.rating ?? 0,
+                      tempC: entry.waterTemp,
+                      timeSec: entry.timeTaken,
+                      grind: entry.grindSetting ?? '',
+                      notes: entry.notes ?? '',
                       onTap: () {
                         Navigator.push(
                           context,
@@ -217,8 +218,8 @@ class _JournalCard extends StatelessWidget {
   final String day;
   final String title;
   final double rating;
-  final int tempC;
-  final int timeSec;
+  final int? tempC;
+  final int? timeSec;
   final String grind;
   final String notes;
   final VoidCallback onTap;
@@ -237,7 +238,7 @@ class _JournalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final duration = Duration(seconds: timeSec);
+    final duration = Duration(seconds: timeSec ?? 0);
     final mm = duration.inMinutes.remainder(60).toString().padLeft(1, '0');
     final ss = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
 
@@ -312,11 +313,13 @@ class _JournalCard extends StatelessWidget {
                     children: [
                       _SpecChip(
                         icon: Icons.local_fire_department,
-                        label: tempC > 0 ? '$tempC°C' : '—',
+                        label: BrewGuardrails.isPlausibleWaterTemp(tempC)
+                            ? '$tempC°C'
+                            : '—',
                       ),
                       _SpecChip(
                         icon: Icons.timer_outlined,
-                        label: timeSec > 0 ? '$mm:$ss' : '—',
+                        label: (timeSec ?? 0) > 0 ? '$mm:$ss' : '—',
                       ),
                       _SpecChip(
                         icon: Icons.settings,

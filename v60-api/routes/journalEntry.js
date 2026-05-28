@@ -10,6 +10,7 @@ const feedbackSchema = {
   required: [
     'summary',
     'tasteDiagnosis',
+    'primaryAdjustment',
     'recommendations',
     'nextBrewRecipe',
     'confidence',
@@ -17,6 +18,18 @@ const feedbackSchema = {
   properties: {
     summary: { type: 'string' },
     tasteDiagnosis: { type: 'string' },
+    primaryAdjustment: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['variable', 'direction', 'currentValue', 'targetValue', 'reason'],
+      properties: {
+        variable: { type: 'string', enum: ['grind', 'temperature', 'ratio', 'agitation', 'brewTime', 'pours', 'dose', 'water'] },
+        direction: { type: 'string' },
+        currentValue: { type: 'string' },
+        targetValue: { type: 'string' },
+        reason: { type: 'string' },
+      },
+    },
     recommendations: {
       type: 'array',
       items: {
@@ -81,12 +94,21 @@ const learningResponseSchema = {
 
 function compactObject(value) {
   return Object.fromEntries(
-    Object.entries(value).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    Object.entries(value).filter(([, v]) => {
+      if (v === undefined || v === null || v === '') return false;
+      return !(v.constructor === Object && Object.keys(v).length === 0);
+    })
   );
 }
 
 function positiveNumber(value) {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function plausibleWaterTemp(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 75 && value <= 100
+    ? value
+    : undefined;
 }
 
 function usefulString(value) {
@@ -100,13 +122,38 @@ function buildBrewContext(entry, recipeContext) {
   return compactObject({
     rating: entry.rating,
     tasteNotes: usefulString(entry.notes),
+    structuredTasteFeedback: entry.tastingFeedback,
     recipeName: entry.recipe,
-    waterTempC: positiveNumber(entry.waterTemp),
+    waterTempC: plausibleWaterTemp(entry.waterTemp),
     brewTimeSeconds: positiveNumber(entry.timeTaken),
     grindSetting: usefulString(entry.grindSetting),
     coffeeDose: usefulString(entry.coffeeDose),
     waterWeightGrams: positiveNumber(entry.waterWeightGrams),
-    recipeDefaults: recipeContext,
+    bloomTimeSeconds: positiveNumber(entry.bloomTimeSeconds),
+    bloomWaterGrams: positiveNumber(entry.bloomWaterGrams),
+    pourCount: positiveNumber(entry.pourCount),
+    pourPattern: usefulString(entry.pourPattern),
+    agitation: entry.agitation ? compactObject({
+      swirled: entry.agitation.swirled,
+      stirred: entry.agitation.stirred,
+      notes: usefulString(entry.agitation.notes),
+    }) : undefined,
+    filterType: usefulString(entry.filterType),
+    brewer: entry.brewer ? compactObject({
+      size: usefulString(entry.brewer.size),
+      material: usefulString(entry.brewer.material),
+    }) : undefined,
+    grinder: entry.grinder ? compactObject({
+      model: usefulString(entry.grinder.model),
+      burrs: usefulString(entry.grinder.burrs),
+      grindScale: usefulString(entry.grinder.grindScale),
+    }) : undefined,
+    waterProfile: entry.water ? compactObject({
+      source: usefulString(entry.water.source),
+      profile: usefulString(entry.water.profile),
+    }) : undefined,
+    drawdownTimeSeconds: positiveNumber(entry.drawdownTimeSeconds),
+    recipeDefaults: sanitizeRecipeContext(recipeContext),
     beans: bean ? compactObject({
       name: usefulString(bean.name),
       origin: usefulString(bean.origin),
@@ -180,6 +227,16 @@ function sanitizeFeedback(feedback) {
     confidence: feedback.confidence,
   };
 
+  clean.primaryAdjustment = feedback.primaryAdjustment
+    ? {
+        variable: stripReasoningText(feedback.primaryAdjustment.variable),
+        direction: stripReasoningText(feedback.primaryAdjustment.direction),
+        currentValue: stripReasoningText(feedback.primaryAdjustment.currentValue),
+        targetValue: stripReasoningText(feedback.primaryAdjustment.targetValue),
+        reason: stripReasoningText(feedback.primaryAdjustment.reason),
+      }
+    : undefined;
+
   clean.recommendations = Array.isArray(feedback.recommendations)
     ? feedback.recommendations
         .map((rec) => ({
@@ -202,6 +259,85 @@ function sanitizeFeedback(feedback) {
   );
 
   return clean;
+}
+
+function describeRating(rating) {
+  const numeric = typeof rating === 'number' ? rating : Number.parseFloat(rating);
+  return Number.isFinite(numeric)
+    ? numeric.toFixed(numeric % 1 === 0 ? 0 : 1)
+    : undefined;
+}
+
+function summarizeEntryForComparison(entry) {
+  return compactObject({
+    rating: describeRating(entry.rating),
+    notes: usefulString(entry.notes),
+    structuredTasteFeedback: entry.tastingFeedback,
+    waterTempC: plausibleWaterTemp(entry.waterTemp),
+    brewTimeSeconds: positiveNumber(entry.timeTaken),
+    grindSetting: usefulString(entry.grindSetting),
+    coffeeDose: usefulString(entry.coffeeDose),
+    waterWeightGrams: positiveNumber(entry.waterWeightGrams),
+    bloomTimeSeconds: positiveNumber(entry.bloomTimeSeconds),
+    bloomWaterGrams: positiveNumber(entry.bloomWaterGrams),
+    pourCount: positiveNumber(entry.pourCount),
+    pourPattern: usefulString(entry.pourPattern),
+    agitation: entry.agitation ? compactObject({
+      swirled: entry.agitation.swirled,
+      stirred: entry.agitation.stirred,
+      notes: usefulString(entry.agitation.notes),
+    }) : undefined,
+    filterType: usefulString(entry.filterType),
+    brewer: entry.brewer ? compactObject({
+      size: usefulString(entry.brewer.size),
+      material: usefulString(entry.brewer.material),
+    }) : undefined,
+    grinder: entry.grinder ? compactObject({
+      model: usefulString(entry.grinder.model),
+      burrs: usefulString(entry.grinder.burrs),
+      grindScale: usefulString(entry.grinder.grindScale),
+    }) : undefined,
+    waterProfile: entry.water ? compactObject({
+      source: usefulString(entry.water.source),
+      profile: usefulString(entry.water.profile),
+    }) : undefined,
+    drawdownTimeSeconds: positiveNumber(entry.drawdownTimeSeconds),
+  });
+}
+
+function buildComparisonResult(previousEntry, currentEntry, plannedAdjustment) {
+  const parsedPreviousRating = Number.parseFloat(previousEntry.rating);
+  const parsedCurrentRating = Number.parseFloat(currentEntry.rating);
+  const previousRating = Number.isFinite(parsedPreviousRating) ? parsedPreviousRating : undefined;
+  const currentRating = Number.isFinite(parsedCurrentRating) ? parsedCurrentRating : undefined;
+  const ratingDelta = previousRating !== undefined && currentRating !== undefined
+    ? Number((currentRating - previousRating).toFixed(1))
+    : undefined;
+
+  let outcome = 'unknown';
+  if (ratingDelta !== undefined) {
+    if (ratingDelta >= 0.5) outcome = 'improved';
+    else if (ratingDelta <= -0.5) outcome = 'worse';
+    else outcome = 'similar';
+  }
+
+  const variable = plannedAdjustment?.variable || 'planned variable';
+  const nextStep = {
+    improved: `Keep the ${variable} change for one more brew before changing anything else.`,
+    worse: `Reverse the ${variable} change and keep the other variables steady.`,
+    similar: `Hold the ${variable} change steady or make a smaller follow-up adjustment.`,
+    unknown: 'Add a rating to make the comparison more useful.',
+  }[outcome];
+
+  return compactObject({
+    sourceEntryId: previousEntry._id.toString(),
+    changedVariable: variable,
+    previous: summarizeEntryForComparison(previousEntry),
+    current: summarizeEntryForComparison(currentEntry),
+    ratingDelta,
+    outcome,
+    nextStep,
+  });
 }
 
 function sanitizeProfileUpdate(profileUpdate) {
@@ -227,9 +363,53 @@ function parseLearningResponse(response) {
   };
 }
 
+function sanitizeRecipeContext(recipeContext) {
+  if (!recipeContext || typeof recipeContext !== 'object') return undefined;
+  const clean = { ...recipeContext };
+  const temp = plausibleWaterTemp(clean.waterTemp);
+  if (temp === undefined) delete clean.waterTemp;
+  else clean.waterTemp = temp;
+  return compactObject(clean);
+}
+
+function sanitizeJournalBody(body) {
+  const clean = { ...body };
+  for (const key of [
+    'waterTemp',
+    'timeTaken',
+    'waterWeightGrams',
+    'bloomTimeSeconds',
+    'bloomWaterGrams',
+    'pourCount',
+    'drawdownTimeSeconds',
+  ]) {
+    if (clean[key] === 0 || clean[key] === '0' || clean[key] === '') {
+      delete clean[key];
+    }
+  }
+  if (plausibleWaterTemp(clean.waterTemp) === undefined) delete clean.waterTemp;
+  return clean;
+}
+
 // CREATE (owner from token)
 router.post('/', async (req, res) => {
-  const created = await JournalEntry.create({ ...req.body, owner: req.user.uid });
+  const body = sanitizeJournalBody(req.body || {});
+  const sourceId = body.comparisonSourceEntryId;
+  const plannedAdjustment = body.plannedAdjustment;
+  const created = await JournalEntry.create({
+    ...body,
+    guidedAdjustment: body.guidedAdjustment || plannedAdjustment,
+    owner: req.user.uid,
+  });
+
+  if (sourceId) {
+    const previousEntry = await JournalEntry.findOne({ _id: sourceId, owner: req.user.uid });
+    if (previousEntry) {
+      created.comparisonResult = buildComparisonResult(previousEntry, created, plannedAdjustment);
+      await created.save();
+    }
+  }
+
   // return populated
   const full = await JournalEntry.findById(created._id)
     .populate('beans')
@@ -287,8 +467,10 @@ router.post('/:id/ai-feedback', async (req, res) => {
           content: [
             'You are a practical V60 pour-over coffee coach.',
             'Use the current brew, learned user profile, and recent brew history to give personalized advice for the next brew.',
-            'Be concrete about temperature, grind, brew time, pours, dose, and water where relevant.',
-            'Do not change every variable at once; prioritize the one or two changes most likely to help.',
+            'Recommend exactly one primary variable to change for the next brew: grind, temperature, ratio, agitation, brew time, pours, dose, or water.',
+            'Keep every other variable the same unless the current data is missing or impossible.',
+            'Be concrete about the current value, target value, direction, and why this single change is most likely to help.',
+            'Treat structuredTasteFeedback as higher-signal taste data than star rating alone, especially sour, sweet, bitter, thin, heavy, dry, clean, weak, intense, astringent, muddy, and hollow markers.',
             'Avoid pretending certainty. If notes are vague or data is missing, say so and lower confidence.',
             'Do not show hidden reasoning, chain-of-thought, scratchpad, or step-by-step thinking.',
             'Ignore missing placeholder values such as 0 C, 0 seconds, and 0 grams; do not criticize them.',
@@ -313,6 +495,7 @@ router.post('/:id/ai-feedback', async (req, res) => {
 
     const { feedback: aiFeedback, profileUpdate } = parseLearningResponse(response);
     entry.aiFeedback = aiFeedback;
+    entry.guidedAdjustment = aiFeedback.primaryAdjustment;
     entry.aiFeedbackGeneratedAt = new Date();
     entry.aiFeedbackModel = model;
     await entry.save();
@@ -355,7 +538,7 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const updated = await JournalEntry.findOneAndUpdate(
     { _id: req.params.id, owner: req.user.uid },
-    req.body,
+    sanitizeJournalBody(req.body || {}),
     { new: true }
   )
     .populate('beans')

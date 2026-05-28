@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:v60pal/ApiClient.dart';
 import 'package:v60pal/Theme.dart';
+import 'package:v60pal/models/BrewGuardrails.dart';
 import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/models/Beans.dart';
@@ -45,6 +46,11 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
     api = ApiClient(apiBaseUrl);
     journalSvc = JournalService(api);
     beansSvc = BeansService(api);
+    myTempController.text =
+        BrewGuardrails.isPlausibleWaterTemp(recipe.waterTemp)
+        ? recipe.waterTemp.toString()
+        : '';
+    myGrindController.text = recipe.grindSize;
   }
 
   @override
@@ -72,14 +78,14 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                     });
 
                     final newGrindSetting = (myGrindController.text.isEmpty)
-                        ? ""
+                        ? recipe.grindSize
                         : myGrindController.text;
                     final newNotes = (myNotesController.text.isEmpty)
                         ? ""
                         : myNotesController.text;
-                    final newTemp = (myTempController.text.isEmpty)
-                        ? 0
-                        : int.parse(myTempController.text);
+                    final newTemp = BrewGuardrails.parseWaterTemp(
+                      myTempController.text,
+                    );
 
                     final nullBeans = Beans(
                       id: '',
@@ -106,6 +112,8 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                       coffeeDose: recipe.coffeeDose,
                       waterWeightGrams: recipe.waterWeightGrams,
                       grindSetting: newGrindSetting,
+                      pourCount: recipe.pourSteps.length,
+                      pourPattern: recipe.pourAmounts.join(', '),
                       notes: newNotes,
                       beans: selectedBeans!,
                       recipe: recipe,
@@ -141,6 +149,8 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                             coffeeDose: recipe.coffeeDose,
                             waterWeightGrams: recipe.waterWeightGrams,
                             grindSetting: newGrindSetting,
+                            pourCount: recipe.pourSteps.length,
+                            pourPattern: recipe.pourAmounts.join(', '),
                             notes: newNotes,
                             beansId: beansId,
                             date: DateTime.now(),
@@ -322,9 +332,61 @@ class _PostTimerScreenState extends State<PostTimerScreen> {
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly, // only 0–9
                           ],
+                          onChanged: (_) => setState(() {}),
                         ),
                       ),
                     ],
+                  ),
+                  if (myTempController.text.trim().isNotEmpty &&
+                      !BrewGuardrails.isPlausibleWaterTemp(
+                        int.tryParse(myTempController.text),
+                      )) ...[
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 16,
+                          color: WARNING_COLOR,
+                        ),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Use ${BrewGuardrails.minPlausibleWaterTempC}-${BrewGuardrails.maxPlausibleWaterTempC} C, or leave blank.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: WARNING_COLOR,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  ...BrewGuardrails.recipeWarnings(recipe).map(
+                    (warning) => Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 16,
+                            color: WARNING_COLOR,
+                          ),
+                          SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              warning,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: WARNING_COLOR,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
