@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:v60pal/PostTimerScreen.dart';
+import 'package:v60pal/AddJournalEntryScreen.dart';
 import 'package:v60pal/Theme.dart';
+import 'package:v60pal/models/JournalEntry.dart';
 import 'package:v60pal/models/Recipe.dart';
 import 'package:v60pal/widgets/app_ui.dart';
 
@@ -127,10 +128,25 @@ class _TimerScreenState extends State<TimerScreen>
         isRunning = false;
         currentStepIndex++;
       });
-      Navigator.push(
+      final draftEntry = JournalEntry(
+        id: '',
+        rating: 0,
+        waterTemp: widget.recipe.waterTemp,
+        timeTaken: widget.recipe.pourSteps.last,
+        coffeeDose: widget.recipe.coffeeDose,
+        waterWeightGrams: widget.recipe.waterWeightGrams,
+        grindSetting: widget.recipe.grindSize,
+        pourCount: widget.recipe.pourSteps.length,
+        pourPattern: widget.recipe.pourAmounts.join(', '),
+        notes: '',
+        recipe: widget.recipe,
+        recipeId: widget.recipe.name,
+        date: DateTime.now(),
+      );
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => PostTimerScreen(recipe: widget.recipe),
+          builder: (context) => AddJournalEntryScreen(sourceEntry: draftEntry),
         ),
       );
     }

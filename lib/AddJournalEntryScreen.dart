@@ -320,6 +320,9 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
     } else {
       beansId = selectedBeans!.id;
     }
+    final comparisonSourceEntryId = widget.sourceEntry?.id.isNotEmpty == true
+        ? widget.sourceEntry!.id
+        : null;
 
     var journalEntry = JournalEntry(
       id: '',
@@ -349,7 +352,7 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
       tastingFeedback: newTastingFeedback,
       guidedAdjustment: widget.plannedAdjustment,
       plannedAdjustment: widget.plannedAdjustment,
-      comparisonSourceEntryId: widget.sourceEntry?.id,
+      comparisonSourceEntryId: comparisonSourceEntryId,
       beans: selectedBeans!,
       recipe: selectedRecipe!,
       date: DateTime.now(),
@@ -384,7 +387,7 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
         tastingFeedback: newTastingFeedback,
         guidedAdjustment: widget.plannedAdjustment,
         plannedAdjustment: widget.plannedAdjustment,
-        comparisonSourceEntryId: widget.sourceEntry?.id,
+        comparisonSourceEntryId: comparisonSourceEntryId,
         beansId: beansId,
         date: DateTime.now(),
         recipeId: selectedRecipe!.name,
@@ -533,6 +536,19 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
     final recipeWarnings = selectedRecipe == null
         ? const <String>[]
         : BrewGuardrails.recipeWarnings(selectedRecipe!);
+    final recipeOptions = List<Recipe>.from(RECIPES);
+    final selectedRecipeValue = selectedRecipe == null
+        ? null
+        : recipeOptions.cast<Recipe?>().firstWhere(
+            (recipe) =>
+                recipe != null &&
+                (recipe.id == selectedRecipe!.id ||
+                    recipe.name == selectedRecipe!.name),
+            orElse: () => null,
+          );
+    if (selectedRecipe != null && selectedRecipeValue == null) {
+      recipeOptions.add(selectedRecipe!);
+    }
     return Scaffold(
       backgroundColor: BACKGROUND_COLOR,
       appBar: AppBar(
@@ -616,8 +632,8 @@ class AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                   DropdownButtonFormField<Recipe>(
                     isExpanded: true,
                     decoration: appInputDecoration('Select a recipe'),
-                    initialValue: selectedRecipe,
-                    items: RECIPES.map((recipe) {
+                    initialValue: selectedRecipeValue ?? selectedRecipe,
+                    items: recipeOptions.map((recipe) {
                       return DropdownMenuItem<Recipe>(
                         value: recipe,
                         child: Text(recipe.name),

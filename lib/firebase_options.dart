@@ -53,7 +53,6 @@ class DefaultFirebaseOptions {
     projectId: 'v60-pal-de95b',
     storageBucket: 'v60-pal-de95b.firebasestorage.app',
   );
-
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDo3bArabRpoP4EQLpf9ZlDnw3i6O7XylM',
     appId: '1:55417226684:web:989e2104267677f58ad7b9',

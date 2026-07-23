@@ -388,6 +388,9 @@ function sanitizeJournalBody(body) {
     }
   }
   if (plausibleWaterTemp(clean.waterTemp) === undefined) delete clean.waterTemp;
+  for (const key of ['beans', 'comparisonSourceEntryId']) {
+    if (clean[key] === '') delete clean[key];
+  }
   return clean;
 }
 
@@ -412,8 +415,7 @@ router.post('/', async (req, res) => {
 
   // return populated
   const full = await JournalEntry.findById(created._id)
-    .populate('beans')
-    .populate('recipe');
+    .populate('beans');
   res.status(201).json(full);
 });
 
@@ -421,8 +423,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   const entries = await JournalEntry.find({ owner: req.user.uid })
     .sort({ createdAt: -1 })
-    .populate('beans')
-    .populate('recipe');
+    .populate('beans');
   res.json(entries);
 });
 
@@ -516,8 +517,7 @@ router.post('/:id/ai-feedback', async (req, res) => {
     );
 
     const full = await JournalEntry.findById(entry._id)
-      .populate('beans')
-      .populate('recipe');
+      .populate('beans');
     res.json({ entry: full, aiProfile: savedProfile });
   } catch (err) {
     console.error('AI feedback failed:', err);
@@ -528,8 +528,7 @@ router.post('/:id/ai-feedback', async (req, res) => {
 // READ one (must be owned)
 router.get('/:id', async (req, res) => {
   const entry = await JournalEntry.findOne({ _id: req.params.id, owner: req.user.uid })
-    .populate('beans')
-    .populate('recipe');
+    .populate('beans');
   if (!entry) return res.sendStatus(404);
   res.json(entry);
 });
@@ -541,8 +540,7 @@ router.put('/:id', async (req, res) => {
     sanitizeJournalBody(req.body || {}),
     { new: true }
   )
-    .populate('beans')
-    .populate('recipe');
+    .populate('beans');
   if (!updated) return res.sendStatus(404);
   res.json(updated);
 });

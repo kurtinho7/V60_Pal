@@ -194,10 +194,9 @@ class _JournalScreenState extends State<JournalScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          ModalBottomSheetRoute(
+                          MaterialPageRoute(
                             builder: (context) =>
                                 JournalEntryViewScreen(journalEntry: entry),
-                            isScrollControlled: true,
                           ),
                         );
                       },
