@@ -698,6 +698,33 @@ class _AiFeedbackCard extends StatelessWidget {
         [];
   }
 
+  String _feedbackText(String key) {
+    final value = feedback?[key];
+    return value is String ? value.trim() : '';
+  }
+
+  String _normalizeFeedbackText(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  bool _repeatsText(String value, Iterable<String> previous) {
+    final normalized = _normalizeFeedbackText(value);
+    if (normalized.length < 24) return false;
+    return previous
+        .map(_normalizeFeedbackText)
+        .where((item) => item.length >= 24)
+        .any(
+          (item) =>
+              item == normalized ||
+              item.contains(normalized) ||
+              normalized.contains(item),
+        );
+  }
+
   bool _isPrimaryRecommendation(
     Map<String, dynamic> recommendation,
     Map<String, dynamic>? primaryAdjustment,
@@ -732,6 +759,14 @@ class _AiFeedbackCard extends StatelessWidget {
     final nextRecipe = feedback?['nextBrewRecipe'] is Map
         ? Map<String, dynamic>.from(feedback!['nextBrewRecipe'] as Map)
         : <String, dynamic>{};
+    final summary = _feedbackText('summary');
+    final tasteDiagnosis = _feedbackText('tasteDiagnosis');
+    final primaryReason = '${primaryAdjustment?['reason'] ?? ''}'.trim();
+    final showPrimaryReason =
+        primaryReason.isNotEmpty && !_repeatsText(primaryReason, [summary]);
+    final showTasteDiagnosis =
+        tasteDiagnosis.isNotEmpty &&
+        !_repeatsText(tasteDiagnosis, [summary, primaryReason]);
     final tastePreferences = _stringList('tastePreferences');
     final successfulPatterns = _stringList('successfulPatterns');
     final recurringIssues = _stringList('recurringIssues');
@@ -749,23 +784,29 @@ class _AiFeedbackCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (hasFeedback) ...[
-            Text(
-              feedback!['summary'] as String? ?? '',
-              style: TextStyle(
-                color: TEXT_COLOR,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+            if (summary.isNotEmpty) ...[
+              Text(
+                summary,
+                style: TextStyle(
+                  color: TEXT_COLOR,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              feedback!['tasteDiagnosis'] as String? ?? '',
-              style: TextStyle(color: TEXT_COLOR.withValues(alpha: 0.86)),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 10),
+            ],
+            if (showTasteDiagnosis) ...[
+              Text(
+                tasteDiagnosis,
+                style: TextStyle(color: TEXT_COLOR.withValues(alpha: 0.86)),
+              ),
+              const SizedBox(height: 14),
+            ] else
+              const SizedBox(height: 4),
             if (primaryAdjustment != null) ...[
               _PrimaryAdjustmentPanel(
                 adjustment: primaryAdjustment,
+                showReason: showPrimaryReason,
                 onTryNext: () => onTryNext(primaryAdjustment, nextRecipe),
               ),
               const SizedBox(height: 14),
@@ -1016,10 +1057,12 @@ class _RecommendationTile extends StatelessWidget {
 
 class _PrimaryAdjustmentPanel extends StatelessWidget {
   final Map<String, dynamic> adjustment;
+  final bool showReason;
   final VoidCallback onTryNext;
 
   const _PrimaryAdjustmentPanel({
     required this.adjustment,
+    required this.showReason,
     required this.onTryNext,
   });
 
@@ -1055,7 +1098,7 @@ class _PrimaryAdjustmentPanel extends StatelessWidget {
             '$current -> $target',
             style: TextStyle(color: TEXT_COLOR, fontWeight: FontWeight.w600),
           ),
-          if (reason.trim().isNotEmpty) ...[
+          if (showReason && reason.trim().isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
               reason,

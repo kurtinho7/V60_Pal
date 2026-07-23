@@ -167,7 +167,7 @@ function buildBrewContext(entry, recipeContext) {
 function cleanStringList(value, limit = 6) {
   if (!Array.isArray(value)) return [];
   return value
-    .map(stripReasoningText)
+    .map((item) => limitText(item, 80))
     .filter((item) => typeof item === 'string' && item.trim())
     .slice(0, limit);
 }
@@ -207,6 +207,16 @@ function stripReasoningText(value) {
     .trim();
 }
 
+function limitText(value, maxLength) {
+  if (typeof value !== 'string') return value;
+  const trimmed = stripReasoningText(value);
+  if (trimmed.length <= maxLength) return trimmed;
+  const shortened = trimmed.slice(0, maxLength + 1);
+  const lastSpace = shortened.lastIndexOf(' ');
+  const cutAt = lastSpace > maxLength * 0.65 ? lastSpace : maxLength;
+  return `${shortened.slice(0, cutAt).trim()}...`;
+}
+
 function hasUselessPlaceholderAdvice(value) {
   if (typeof value !== 'string') return false;
   return [
@@ -222,39 +232,40 @@ function hasUselessPlaceholderAdvice(value) {
 function sanitizeFeedback(feedback) {
   const clean = {
     ...feedback,
-    summary: stripReasoningText(feedback.summary),
-    tasteDiagnosis: stripReasoningText(feedback.tasteDiagnosis),
+    summary: limitText(feedback.summary, 140),
+    tasteDiagnosis: limitText(feedback.tasteDiagnosis, 160),
     confidence: feedback.confidence,
   };
 
   clean.primaryAdjustment = feedback.primaryAdjustment
     ? {
         variable: stripReasoningText(feedback.primaryAdjustment.variable),
-        direction: stripReasoningText(feedback.primaryAdjustment.direction),
-        currentValue: stripReasoningText(feedback.primaryAdjustment.currentValue),
-        targetValue: stripReasoningText(feedback.primaryAdjustment.targetValue),
-        reason: stripReasoningText(feedback.primaryAdjustment.reason),
+        direction: limitText(feedback.primaryAdjustment.direction, 40),
+        currentValue: limitText(feedback.primaryAdjustment.currentValue, 40),
+        targetValue: limitText(feedback.primaryAdjustment.targetValue, 40),
+        reason: limitText(feedback.primaryAdjustment.reason, 140),
       }
     : undefined;
 
   clean.recommendations = Array.isArray(feedback.recommendations)
     ? feedback.recommendations
         .map((rec) => ({
-          parameter: stripReasoningText(rec.parameter),
-          currentValue: stripReasoningText(rec.currentValue),
-          suggestedChange: stripReasoningText(rec.suggestedChange),
-          reason: stripReasoningText(rec.reason),
+          parameter: limitText(rec.parameter, 40),
+          currentValue: limitText(rec.currentValue, 40),
+          suggestedChange: limitText(rec.suggestedChange, 60),
+          reason: limitText(rec.reason, 120),
         }))
         .filter((rec) => {
           const combined = Object.values(rec).join(' ');
           return !hasUselessPlaceholderAdvice(combined);
         })
+        .slice(0, 2)
     : [];
 
   clean.nextBrewRecipe = Object.fromEntries(
     Object.entries(feedback.nextBrewRecipe || {}).map(([key, value]) => [
       key,
-      stripReasoningText(value),
+      limitText(value, 40),
     ])
   );
 
@@ -342,11 +353,11 @@ function buildComparisonResult(previousEntry, currentEntry, plannedAdjustment) {
 
 function sanitizeProfileUpdate(profileUpdate) {
   return {
-    tastePreferences: cleanStringList(profileUpdate?.tastePreferences),
-    successfulPatterns: cleanStringList(profileUpdate?.successfulPatterns),
-    recurringIssues: cleanStringList(profileUpdate?.recurringIssues),
-    beanPreferences: cleanStringList(profileUpdate?.beanPreferences),
-    nextFocus: stripReasoningText(profileUpdate?.nextFocus || ''),
+    tastePreferences: cleanStringList(profileUpdate?.tastePreferences, 4),
+    successfulPatterns: cleanStringList(profileUpdate?.successfulPatterns, 4),
+    recurringIssues: cleanStringList(profileUpdate?.recurringIssues, 4),
+    beanPreferences: cleanStringList(profileUpdate?.beanPreferences, 4),
+    nextFocus: limitText(profileUpdate?.nextFocus || '', 100),
     confidence: ['low', 'medium', 'high'].includes(profileUpdate?.confidence)
       ? profileUpdate.confidence
       : 'low',
@@ -462,21 +473,27 @@ router.post('/:id/ai-feedback', async (req, res) => {
   try {
     const response = await client.responses.create({
       model,
+      max_output_tokens: 1000,
       input: [
         {
           role: 'developer',
           content: [
             'You are a practical V60 pour-over coffee coach.',
             'Use the current brew, learned user profile, and recent brew history to give personalized advice for the next brew.',
+            'Make the feedback succinct, skimmable, and non-repetitive.',
+            'summary: one short sentence about the cup result only.',
+            'tasteDiagnosis: one short sentence naming the likely taste cause only; do not repeat the next action.',
             'Recommend exactly one primary variable to change for the next brew: grind, temperature, ratio, agitation, brew time, pours, dose, or water.',
             'Keep every other variable the same unless the current data is missing or impossible.',
-            'Be concrete about the current value, target value, direction, and why this single change is most likely to help.',
+            'primaryAdjustment.reason: one concise reason, no more than 18 words, and do not restate summary or tasteDiagnosis.',
+            'recommendations: include only optional non-primary cleanup items; use an empty array if they would repeat the primary adjustment.',
+            'nextBrewRecipe: list final target values only, with no explanation.',
             'Treat structuredTasteFeedback as higher-signal taste data than star rating alone, especially sour, sweet, bitter, thin, heavy, dry, clean, weak, intense, astringent, muddy, and hollow markers.',
             'Avoid pretending certainty. If notes are vague or data is missing, say so and lower confidence.',
             'Do not show hidden reasoning, chain-of-thought, scratchpad, or step-by-step thinking.',
             'Ignore missing placeholder values such as 0 C, 0 seconds, and 0 grams; do not criticize them.',
             'Only recommend changes based on real brew data or recipe defaults.',
-            'Update the learned profile as a compact summary of durable preferences and patterns, not a transcript.',
+            'Update the learned profile as compact durable patterns only; do not add one-off details or repeat the current primary adjustment as nextFocus.',
           ].join(' '),
         },
         {
